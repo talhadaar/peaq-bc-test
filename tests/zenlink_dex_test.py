@@ -14,6 +14,7 @@ from peaq.utils import get_account_balance
 from tools.currency import peaq, dot, bnc
 from tests.utils_func import restart_parachain_and_runtime_upgrade
 from tools.runtime_upgrade import wait_until_block_height
+from tools.utils import get_relay_chain_token
 from tests import utils_func as TestUtils
 
 
@@ -342,7 +343,7 @@ def relay2para_transfer(si_relay, si_peaq, sender, tos, amnts):
         compose_xcm_rta_relay2para(bt_sender, recipi, amnts[i])
     receipt = bt_sender.execute()
     assert receipt.is_success
-    wait_n_check_token_deposit(si_peaq, kp_recipi[-1], 'DOT')
+    wait_n_check_token_deposit(si_peaq, kp_recipi[-1], get_relay_chain_token(si_peaq))
 
 
 def bifrost2para_transfer(si_bifrost, si_peaq, sender, tos, amnts):
@@ -389,10 +390,10 @@ def create_pair_n_swap_test(si_relay, si_peaq):
     relay2para_transfer(si_relay, si_peaq, '//Alice', ['//Alice', '//Dave'], [amount, amount])
 
     # Check that DOT tokens for liquidity have been transfered succesfully
-    dot_liquidity = state_tokens_accounts(si_peaq, kp_para_sudo, 'DOT')
+    dot_liquidity = state_tokens_accounts(si_peaq, kp_para_sudo, get_relay_chain_token(si_peaq))
     assert dot_liquidity >= dot(TOK_LIQUIDITY)
     # Check that beneficiary has DOT and PEAQ tokens available
-    dot_balance = state_tokens_accounts(si_peaq, kp_beneficiary, 'DOT')
+    dot_balance = state_tokens_accounts(si_peaq, kp_beneficiary, get_relay_chain_token(si_peaq))
     assert dot_balance > dot(TOK_SWAP)
 
     # 1.) Create a liquidity pair and add liquidity on pallet Zenlink-Protocol
@@ -553,7 +554,7 @@ def zenlink_empty_lp_swap_test(si_relay, si_peaq):
     assert receipt.is_success
 
     # 9.
-    dot_balance = state_tokens_accounts(si_peaq, bt_usr2.keypair, 'DOT')
+    dot_balance = state_tokens_accounts(si_peaq, bt_usr2.keypair, get_relay_chain_token(si_peaq))
     assert dot_balance > 0
 
     # 10. #error

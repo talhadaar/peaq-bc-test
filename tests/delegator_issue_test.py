@@ -129,8 +129,8 @@ class TestDelegator(unittest.TestCase):
         collator_percentage = 80
         delegator_percentage = 20
 
-        # Check it's the peaq-dev parachain
-        self.assertTrue(self.chain_name in ['peaq-dev', 'peaq-dev-fork'])
+        # Check it's the agung parachain
+        self.assertTrue(self.chain_name in ['agung-network', 'agung-network-fork'])
         batch = ExtrinsicBatch(self.substrate, KP_GLOBAL_SUDO)
         batch.compose_sudo_call('StakingFixedRewardCalculator', 'set_reward_rate', {
             'collator_rate': collator_percentage,
@@ -166,8 +166,8 @@ class TestDelegator(unittest.TestCase):
             warnings.warn('StakingCoefficientRewardCalculator pallet not exist, skip the test')
             return
 
-        # Check it's the peaq-dev parachain
-        self.assertTrue(self.chain_name in ['peaq-dev', 'peaq-dev-fork', 'krest', 'krest-network-fork'])
+        # Check it's the agung parachain
+        self.assertTrue(self.chain_name in ['agung-network', 'agung-network-fork', 'krest', 'krest-network-fork'])
 
         batch = ExtrinsicBatch(self.substrate, KP_GLOBAL_SUDO)
         batch.compose_sudo_call('BlockReward', 'set_max_currency_supply', {

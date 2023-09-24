@@ -4,6 +4,7 @@ from tools.utils import WS_URL, RELAYCHAIN_WS_URL
 from tools.utils import TOKEN_NUM_BASE
 from peaq.extrinsic import transfer
 from tools.payload import user_extrinsic_send
+from tools.utils import get_relay_chain_token
 import time
 
 
@@ -86,7 +87,7 @@ class TestExitentialDeposits(unittest.TestCase):
             'Accounts',
             params=[
                 kp.ss58_address,
-                {'Token': 'DOT'}
+                {'Token': self.relay_token}
             ]
         )
         return result.value['free']
@@ -106,6 +107,7 @@ class TestExitentialDeposits(unittest.TestCase):
 
     def setUp(self):
         self.substrate = SubstrateInterface(url=WS_URL,)
+        self.relay_token = get_relay_chain_token(self.substrate)
         self.alice = Keypair.create_from_uri('//Alice')
         self.kp = Keypair.create_from_mnemonic(Keypair.generate_mnemonic())
 
@@ -143,6 +145,12 @@ class TestExitentialDeposits(unittest.TestCase):
             count += 1
 
         # Check the error happens
-        receipt = transfer_currencies(self.substrate, self.alice, self.kp, 'DOT', token, 1)
+        receipt = transfer_currencies(
+            self.substrate,
+            self.alice,
+            self.kp,
+            self.relay_token,
+            token,
+            1)
         self.assertFalse(receipt.is_success)
         self.assertEqual(receipt.error_message['name'], 'ExistentialDeposit')

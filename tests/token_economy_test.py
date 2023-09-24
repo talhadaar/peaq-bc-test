@@ -13,7 +13,6 @@ STATE_INFOS = [{
     'module': 'ParachainStaking',
     'storage_function': 'MaxSelectedCandidates',
     'type': {
-        'peaq-dev': 4,
         'agung-network': 4,
         'krest-network': 4,
         # However: in the krest-forked-chain, it should be 16 by sending the extrinsic for the fork chain
@@ -24,8 +23,7 @@ STATE_INFOS = [{
     'module': 'ParachainStaking',
     'storage_function': 'Round',
     'type': {
-        'peaq-dev': {'length': 10},
-        'agung-network': {'length': 600},
+        'agung-network': {'length': 10},
         'krest-network': {'length': 600},
         'peaq-network': {'length': 600},
     }
@@ -34,8 +32,7 @@ STATE_INFOS = [{
     'storage_function': 'BlockIssueReward',
     'almost': True,
     'type': {
-        'peaq-dev': 1 * 10 ** 18,
-        'agung-network': 79098670000000008192,
+        'agung-network': 1 * 10 ** 18,
         'krest-network': 3.80517503805 * 10 ** 18,
         'peaq-network': 79098670000000008192,
     }
@@ -44,7 +41,6 @@ STATE_INFOS = [{
     'storage_function': 'MaxCurrencySupply',
     'almost': True,
     'type': {
-        'peaq-dev': 4200000000 * 10 ** 18,
         'agung-network': 4200000000 * 10 ** 18,
         'krest-network': 400000000 * 10 ** 18,
         'peaq-network': 4200000000 * 10 ** 18,
@@ -55,14 +51,6 @@ STATE_INFOS = [{
     'type': {
         # It's special case because below is percentage,
         # and then you have to divide by 1000000000
-        'peaq-dev': {
-            'treasury_percent': 200000000,
-            'dapps_percent': 250000000,
-            'collators_percent': 100000000,
-            'lp_percent': 250000000,
-            'machines_percent': 100000000,
-            'parachain_lease_fund_percent': 100000000
-        },
         'agung-network': {
             'treasury_percent': 200000000,
             'dapps_percent': 250000000,
@@ -95,7 +83,6 @@ CONSTANT_INFOS = [{
     'module': 'ParachainStaking',
     'storage_function': 'MaxCollatorsPerDelegator',
     'type': {
-        'peaq-dev': 1,
         'agung-network': 1,
         'krest-network': 1,
         'peaq-network': 1,
@@ -104,7 +91,6 @@ CONSTANT_INFOS = [{
     'module': 'ParachainStaking',
     'storage_function': 'MaxDelegationsPerRound',
     'type': {
-        'peaq-dev': 1,
         'agung-network': 1,
         'krest-network': 1,
         'peaq-network': 1,
@@ -113,7 +99,6 @@ CONSTANT_INFOS = [{
     'module': 'ParachainStaking',
     'storage_function': 'MaxDelegatorsPerCollator',
     'type': {
-        'peaq-dev': 25,
         'agung-network': 25,
         'krest-network': 25,
         'peaq-network': 25,
@@ -122,7 +107,6 @@ CONSTANT_INFOS = [{
     'module': 'ParachainStaking',
     'storage_function': 'MaxTopCandidates',
     'type': {
-        'peaq-dev': 16,
         'agung-network': 16,
         'krest-network': 128,
         'peaq-network': 16,
@@ -131,7 +115,6 @@ CONSTANT_INFOS = [{
     'module': 'ParachainStaking',
     'storage_function': 'MinCollatorCandidateStake',
     'type': {
-        'peaq-dev': 32000,
         'agung-network': 32000,
         'krest-network': 50000 * 10 ** 18,
         'peaq-network': 32000,
@@ -140,7 +123,6 @@ CONSTANT_INFOS = [{
     'module': 'ParachainStaking',
     'storage_function': 'MinCollatorStake',
     'type': {
-        'peaq-dev': 32000,
         'agung-network': 32000,
         'krest-network': 50000 * 10 ** 18,
         'peaq-network': 32000,
@@ -149,7 +131,6 @@ CONSTANT_INFOS = [{
     'module': 'ParachainStaking',
     'storage_function': 'MinDelegation',
     'type': {
-        'peaq-dev': 20000,
         'agung-network': 20000,
         'krest-network': 100 * 10 ** 18,
         'peaq-network': 20000,
@@ -158,7 +139,6 @@ CONSTANT_INFOS = [{
     'module': 'ParachainStaking',
     'storage_function': 'MinDelegatorStake',
     'type': {
-        'peaq-dev': 20000,
         'agung-network': 20000,
         'krest-network': 100 * 10 ** 18,
         'peaq-network': 20000,
@@ -169,8 +149,8 @@ CONSTANT_INFOS = [{
 class TokenEconomyTest(unittest.TestCase):
 
     def get_modified_chain_spec(self):
-        if 'peaq-dev-fork' == self._chain_spec:
-            return 'peaq-dev'
+        if 'agung-network-fork' == self._chain_spec:
+            return 'agung-network'
         if 'krest-network-fork' == self._chain_spec:
             return 'krest-network'
 

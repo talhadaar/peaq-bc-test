@@ -7,6 +7,7 @@ from peaq.utils import get_account_balance, show_extrinsic
 from peaq.sudo_extrinsic import fund
 from peaq.eth import calculate_evm_addr
 from peaq.utils import calculate_multi_sig
+from peaq.utils import get_chain
 
 # Monkey patch
 from scalecodec.types import FixedLengthArray
@@ -407,6 +408,17 @@ def _is_it_this_event(e_obj, module, event, attributes) -> bool:
             return True
     else:
         return False
+
+
+def get_relay_chain_token(substrate):
+    chain_name = get_chain(substrate)
+    if chain_name == 'agung-network' or chain_name == 'agung-network-fork':
+        return 'ROC'
+    elif chain_name == 'krest' or chain_name == 'krest-network-fork':
+        return 'KSM'
+    elif chain_name == 'peaq':
+        return 'DOT'
+    raise IOError(f'Unknown chain name: {chain_name}')
 
 
 if __name__ == '__main__':

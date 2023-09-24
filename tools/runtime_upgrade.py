@@ -79,14 +79,14 @@ def upgrade(runtime_path):
 def fund_account():
     print('update the info')
     substrate = SubstrateInterface(url=WS_URL)
-    funds(substrate, [
+    funds(substrate, KP_GLOBAL_SUDO, [
         '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY',
         '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty',
         '5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y',
         '5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy',
         '5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw',
         '5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL'
-    ], 302231 * 10 ** 18)
+    ], 302231 * 10 ** 18, 0)
 
 
 def do_runtime_upgrade(wasm_path):
