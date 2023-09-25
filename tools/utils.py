@@ -413,7 +413,7 @@ def _is_it_this_event(e_obj, module, event, attributes) -> bool:
 def get_relay_chain_token(substrate):
     chain_name = get_chain(substrate)
     if chain_name == 'agung-network' or chain_name == 'agung-network-fork':
-        return 'ROC'
+        return 'DOT'
     elif chain_name == 'krest' or chain_name == 'krest-network-fork':
         return 'KSM'
     elif chain_name == 'peaq':

@@ -25,5 +25,4 @@ def restart_parachain_and_runtime_upgrade():
 def is_not_dev_chain():
     ws = SubstrateInterface(url=WS_URL)
     chain_name = get_chain(ws)
-    print(f'chain_name: {chain_name}')
     return chain_name not in ['agung-network', 'agung-network-fork']
