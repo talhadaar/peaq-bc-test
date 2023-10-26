@@ -77,7 +77,7 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertEqual(f"0x{events[0]['args']['role_id'].hex()}", f"{role_id}")
         self.assertEqual(f"0x{events[0]['args']['name'].hex()}", f"{name}")
 
-    def add_role_and_check(self):
+    def test_add_role_and_check(self):
         substrate = self._substrate
         eth_src = self._eth_src
         w3 = self._w3
