@@ -25,8 +25,8 @@ ABI_FILE = 'ETH/rbac/rbac.sol.json'
 TOKEN_NUM = 10000 * pow(10, 15)
 
 # A role and it's name
-ROLE_ID_1 = generate_random_hex()
-ROLE_ID_1_NAME = 'role1'
+ROLE_ID_1 = generate_random_hex(15).encode("utf-8")
+ROLE_ID_1_NAME = generate_random_hex(15).encode("utf-8")
 
 
 def _calcualte_evm_basic_req(substrate, w3, addr):
@@ -78,6 +78,8 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertEqual(f"0x{events[0]['args']['name'].hex()}", f"{name}")
 
     def test_add_role_and_check(self):
+        print("ROLE_ID ", ROLE_ID_1, "len: ", len(ROLE_ID_1))
+
         substrate = self._substrate
         eth_src = self._eth_src
         w3 = self._w3
