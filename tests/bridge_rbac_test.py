@@ -51,17 +51,6 @@ def _eth_add_role(substrate, w3, contract, eth_kp_src, role_id, name):
     return tx_receipt
 
 
-def _eth_fetch_role(substrate, w3, contract, eth_kp_src, owner, role):
-    tx = contract.functions.fetch_role(owner, role).build_transaction(
-        _calcualte_evm_basic_req(substrate, w3, eth_kp_src.ss58_address)
-    )
-
-    signed_txn = w3.eth.account.sign_transaction(tx, private_key=eth_kp_src.private_key)
-    tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-    tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    return tx_receipt
-
-
 class TestBridgeRbac(unittest.TestCase):
 
     def setUp(self):
