@@ -73,12 +73,11 @@ class TestBridgeRbac(unittest.TestCase):
 
     def check_item_from_event(self, event, account, role_id, name):
         events = event.get_all_entries()
-        self.assertEqual(f"0x{events[0]['args']['owner'].hex()}", account)
+        self.assertEqual(f"0x{events[0]['args']['sender'].hex()}", account)
         self.assertEqual(f"0x{events[0]['args']['role_id'].hex()}", f"{role_id}")
         self.assertEqual(f"0x{events[0]['args']['name'].hex()}", f"{name}")
 
     def test_add_role_and_check(self):
-        print("ROLE_ID ", ROLE_ID_1, "len: ", len(ROLE_ID_1))
 
         substrate = self._substrate
         eth_src = self._eth_src
@@ -89,6 +88,7 @@ class TestBridgeRbac(unittest.TestCase):
         # Setup eth_ko_src with some tokens
         transfer(substrate, KP_SRC, calculate_evm_account(eth_src), TOKEN_NUM)
         bl_hash = call_eth_transfer_a_lot(substrate, KP_SRC, eth_src, eth_kp_src.ss58_address.lower())
+
         # verify tokens have been transferred
         self.assertTrue(bl_hash, f'Failed to transfer token to {eth_kp_src.ss58_address}')
 
@@ -102,10 +102,10 @@ class TestBridgeRbac(unittest.TestCase):
 
         # Check: Add Role
         event = contract.events.RoleAdded.create_filter(fromBlock=block_idx, toBlock=block_idx)
-        self.check_item_from_event(event, account, ROLE_ID_1, ROLE_ID_1_NAME)
+        self.check_item_from_event(event, account, ROLE_ID_1, ROLE_ID_1_NAME)  # TODO event.get_all_entries() is empty
 
         # Execute: Fetch Role
         data = contract.functions.fetch_role(account, ROLE_ID_1).call()
 
         # Check: Fetch Role
-        self.assertEqual(f'0x{data.hex()}', ROLE_ID_1_NAME)
+        self.assertEqual(data[1], ROLE_ID_1_NAME)

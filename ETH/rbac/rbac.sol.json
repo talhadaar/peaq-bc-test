@@ -11,12 +11,6 @@
 			{
 				"indexed": false,
 				"internalType": "bytes32",
-				"name": "owner",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"internalType": "bytes32",
 				"name": "role_id",
 				"type": "bytes32"
 			},
@@ -38,12 +32,6 @@
 				"internalType": "address",
 				"name": "sender",
 				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "bytes32",
-				"name": "owner",
-				"type": "bytes32"
 			},
 			{
 				"indexed": false,
