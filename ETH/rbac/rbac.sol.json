@@ -22,7 +22,33 @@
 				"type": "address"
 			}
 		],
+		"name": "FetchedRolePermissions",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
 		"name": "FetchedUserRoles",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "GroupFetched",
 		"type": "event"
 	},
 	{
@@ -64,6 +90,31 @@
 				"internalType": "bytes32",
 				"name": "permission_id",
 				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "role_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "PermissionAssigned",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "permission_id",
+				"type": "bytes32"
 			}
 		],
 		"name": "PermissionDisabled",
@@ -80,6 +131,31 @@
 			}
 		],
 		"name": "PermissionFetched",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "permission_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "role_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "PermissionUnassignedToRole",
 		"type": "event"
 	},
 	{
@@ -278,6 +354,30 @@
 		"inputs": [
 			{
 				"internalType": "bytes32",
+				"name": "permission_id",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "role_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "assign_permission_to_role",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
 				"name": "role_id",
 				"type": "bytes32"
 			},
@@ -334,6 +434,47 @@
 			}
 		],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "owner",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "fetch_group",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "bytes32",
+						"name": "owner",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes",
+						"name": "name",
+						"type": "bytes"
+					},
+					{
+						"internalType": "bool",
+						"name": "enabled",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct RBAC.Entity",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -463,6 +604,42 @@
 			},
 			{
 				"internalType": "bytes32",
+				"name": "role_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "fetch_role_permissions",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "bytes32",
+						"name": "permission",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					}
+				],
+				"internalType": "struct RBAC.Permission2Role[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "owner",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
 				"name": "role",
 				"type": "bytes32"
 			}
@@ -529,6 +706,30 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "permission_id",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "role_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "unassign_permission_to_role",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
