@@ -62,9 +62,9 @@ class TestBridgeRbac(unittest.TestCase):
 
     def check_item_from_event(self, event, account, role_id, name):
         events = event.get_all_entries()
-        self.assertEqual(f"0x{events[0]['args']['sender'].hex()}", account)
-        self.assertEqual(f"0x{events[0]['args']['role_id'].hex()}", f"{role_id}")
-        self.assertEqual(f"0x{events[0]['args']['name'].hex()}", f"{name}")
+        self.assertEqual(events[0]['args']['sender'], account)
+        self.assertEqual(events[0]['args']['role_id'], role_id)
+        self.assertEqual(events[0]['args']['name'], name)
 
     def test_add_role_and_check(self):
 
@@ -91,7 +91,7 @@ class TestBridgeRbac(unittest.TestCase):
 
         # Check: Add Role
         event = contract.events.RoleAdded.create_filter(fromBlock=block_idx, toBlock=block_idx)
-        self.check_item_from_event(event, account, ROLE_ID_1, ROLE_ID_1_NAME)  # TODO event.get_all_entries() is empty
+        self.check_item_from_event(event, eth_kp_src.ss58_address, ROLE_ID_1, ROLE_ID_1_NAME)
 
         # Execute: Fetch Role
         data = contract.functions.fetch_role(account, ROLE_ID_1).call()
