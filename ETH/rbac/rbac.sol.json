@@ -46,9 +46,78 @@
 				"internalType": "address",
 				"name": "sender",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes",
+				"name": "name",
+				"type": "bytes"
+			}
+		],
+		"name": "GroupAdded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "GroupDisabled",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
 			}
 		],
 		"name": "GroupFetched",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes",
+				"name": "name",
+				"type": "bytes"
+			}
+		],
+		"name": "GroupUpdated",
 		"type": "event"
 	},
 	{
@@ -306,6 +375,30 @@
 		"inputs": [
 			{
 				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes",
+				"name": "name",
+				"type": "bytes"
+			}
+		],
+		"name": "add_group",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
 				"name": "permission_id",
 				"type": "bytes32"
 			},
@@ -388,6 +481,25 @@
 			}
 		],
 		"name": "assign_role_to_user",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "disable_group",
 		"outputs": [
 			{
 				"internalType": "bool",
@@ -746,6 +858,30 @@
 			}
 		],
 		"name": "unassign_role_to_user",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes",
+				"name": "name",
+				"type": "bytes"
+			}
+		],
+		"name": "update_group",
 		"outputs": [
 			{
 				"internalType": "bool",
