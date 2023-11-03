@@ -39,16 +39,19 @@ def _calcualte_evm_basic_req(substrate, w3, addr):
         'chainId': get_eth_chain_id(substrate)
     }
 
+
 def _sign_and_submit_transaction(tx, w3, signer):
     signed_txn = w3.eth.account.sign_transaction(tx, private_key=signer.private_key)
     tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
     return w3.eth.wait_for_transaction_receipt(tx_hash)
+
 
 def _eth_add_role(substrate, w3, contract, signer, role_id, name):
     tx = contract.functions.add_role(role_id, name).build_transaction(
         _calcualte_evm_basic_req(substrate, w3, signer.ss58_address)
     )
     return _sign_and_submit_transaction(tx, w3, signer)
+
 
 def _eth_update_role(substrate, w3, contract, signer, role_id, name):
     tx = contract.functions.update_role(role_id, name).build_transaction(
