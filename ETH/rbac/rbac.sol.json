@@ -22,7 +22,46 @@
 				"type": "address"
 			}
 		],
+		"name": "FetchedGroupRoles",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
 		"name": "FetchedRolePermissions",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "FetchedUserGroups",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			}
+		],
+		"name": "FetchedUserPermissions",
 		"type": "event"
 	},
 	{
@@ -295,6 +334,31 @@
 			{
 				"indexed": false,
 				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "RoleAssignedToGroup",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "role_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
 				"name": "user_id",
 				"type": "bytes32"
 			}
@@ -319,6 +383,31 @@
 			}
 		],
 		"name": "RoleRemoved",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "role_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "RoleUnassignedToGroup",
 		"type": "event"
 	},
 	{
@@ -369,6 +458,56 @@
 			}
 		],
 		"name": "RoleUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "user_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "UserAssignedToGroup",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "user_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "UserUnassignedToGroup",
 		"type": "event"
 	},
 	{
@@ -476,11 +615,59 @@
 			},
 			{
 				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "assign_role_to_group",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "role_id",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
 				"name": "user_id",
 				"type": "bytes32"
 			}
 		],
 		"name": "assign_role_to_user",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "user_id",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "assign_user_to_group",
 		"outputs": [
 			{
 				"internalType": "bool",
@@ -584,6 +771,83 @@
 				"internalType": "struct RBAC.Entity",
 				"name": "",
 				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "owner",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "fetch_group_permissions",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "bytes32",
+						"name": "owner",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes",
+						"name": "name",
+						"type": "bytes"
+					},
+					{
+						"internalType": "bool",
+						"name": "enabled",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct RBAC.Entity[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "owner",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "fetch_group_roles",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "user",
+						"type": "bytes32"
+					}
+				],
+				"internalType": "struct RBAC.Role2User[]",
+				"name": "",
+				"type": "tuple[]"
 			}
 		],
 		"stateMutability": "view",
@@ -797,6 +1061,83 @@
 				"type": "bytes32"
 			}
 		],
+		"name": "fetch_user_groups",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "bytes32",
+						"name": "user",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "group",
+						"type": "bytes32"
+					}
+				],
+				"internalType": "struct RBAC.User2Group[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "owner",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "user_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "fetch_user_permissions",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "bytes32",
+						"name": "owner",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes",
+						"name": "name",
+						"type": "bytes"
+					},
+					{
+						"internalType": "bool",
+						"name": "enabled",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct RBAC.Entity[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "owner",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "user_id",
+				"type": "bytes32"
+			}
+		],
 		"name": "fetch_user_roles",
 		"outputs": [
 			{
@@ -853,11 +1194,59 @@
 			},
 			{
 				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "unassign_role_to_group",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "role_id",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
 				"name": "user_id",
 				"type": "bytes32"
 			}
 		],
 		"name": "unassign_role_to_user",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "user_id",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "group_id",
+				"type": "bytes32"
+			}
+		],
+		"name": "unassign_user_to_group",
 		"outputs": [
 			{
 				"internalType": "bool",
