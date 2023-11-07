@@ -24,10 +24,36 @@ ABI_FILE = 'ETH/rbac/rbac.sol.json'
 # Number of tokens with decimals
 TOKEN_NUM = 10000 * pow(10, 15)
 
-# A role and it's name
-ROLE_ID_1 = generate_random_hex(15).encode("utf-8")
-ROLE_ID_1_NAME = generate_random_hex(15).encode("utf-8")
+# generates list of `length` random utf-8 encoded hex strings of length 15
+def generate_random_hex_list(strlen, listlen):
+    return [ generate_random_hex(strlen).encode("utf-8") for i in range(listlen) ]
 
+# returns list of utf-8 encoded hex strings from a list of strings
+def str_to_utf8_encoded_list(list):
+    return list(map(lambda name: name.encode("utf-8")), list)
+
+##############################################################################
+# Constants for global test-setup defaults
+##############################################################################
+
+ROLE_ID_1 = generate_random_hex_list(15, 5)
+ROLE_ID_1_NAME = generate_random_hex_list(15, 5)
+
+USER_IDS = generate_random_hex_list(15, 5)
+
+PERMISSION_IDS = generate_random_hex_list(15, 5)
+PERMISSION_ID_NAMES = str_to_utf8_encoded_list(["PERMISSION1", "PERMISSION2", "PERMISSION3", "PERMISSION4", "PERMISSION5"])
+
+ROLE_IDS = generate_random_hex_list(15, 5)
+ROLE_ID_NAMES = str_to_utf8_encoded_list(["ROLE1", "ROLE2", "ROLE3", "ROLE4", "ROLE5"])
+
+GROUP_IDS = generate_random_hex_list(15, 5)
+GROUP_ID_NAMES = str_to_utf8_encoded_list(["GROUP1", "GROUP2", "GROUP3", "GROUP4", "GROUP5"])
+
+
+##############################################################################
+# Helper functions for submitting transactions
+##############################################################################
 
 def _calcualte_evm_basic_req(substrate, w3, addr):
     return {
@@ -45,36 +71,38 @@ def _sign_and_submit_transaction(tx, w3, signer):
     tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
     return w3.eth.wait_for_transaction_receipt(tx_hash)
 
-
-def _eth_add_role(substrate, w3, contract, signer, role_id, name):
-    tx = contract.functions.add_role(role_id, name).build_transaction(
-        _calcualte_evm_basic_req(substrate, w3, signer.ss58_address)
-    )
-    return _sign_and_submit_transaction(tx, w3, signer)
-
-
-def _eth_update_role(substrate, w3, contract, signer, role_id, name):
-    tx = contract.functions.update_role(role_id, name).build_transaction(
-        _calcualte_evm_basic_req(substrate, w3, signer.ss58_address)
-    )
-    return _sign_and_submit_transaction(tx, w3, signer)
-
-
-def _eth_disable_role(substrate, w3, contract, signer, role_id):
-    tx = contract.functions.disable_role(role_id).build_transaction(
-        _calcualte_evm_basic_req(substrate, w3, signer.ss58_address)
-    )
-    return _sign_and_submit_transaction(tx, w3, signer)
+##############################################################################
+# Wrapper functions for state chainging extrinsics
+##############################################################################
 
 
 class TestBridgeRbac(unittest.TestCase):
 
-    def setUp(self):
-        self._eth_src = calculate_evm_addr(KP_SRC.ss58_address)
-        self._w3 = Web3(Web3.HTTPProvider(ETH_URL))
-        self._substrate = SubstrateInterface(url=WS_URL)
-        self._eth_kp_src = Keypair.create_from_private_key(ETH_PRIVATE_KEY, crypto_type=KeypairType.ECDSA)
-        self._account = calculate_evm_account_hex(self._eth_kp_src.ss58_address)
+    def _eth_add_role(self, role_id, name):
+        tx = self.contract.functions.add_role(role_id, name).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+
+    def _eth_update_role(self, role_id, name):
+        tx = self.contract.functions.update_role(role_id, name).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+
+    def _eth_disable_role(self, role_id):
+        tx = self.contract.functions.disable_role(role_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _assign_role_to_user(self, role_id, user_id):
+            tx = self.contract.functions.assign_role_to_user(role_id, user_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate,self. w3, self.eth_kp_src.ss58_address)
+        )
+            return _sign_and_submit_transaction(self.tx, self.w3, self.eth_kp_src)
 
     def check_item_from_event(self, event, account, role_id, name):
         events = event.get_all_entries()
@@ -82,35 +110,37 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertEqual(events[0]['args']['role_id'], role_id)
         self.assertEqual(events[0]['args']['name'], name)
 
+    def setUp(self):
+        self.eth_src = calculate_evm_addr(KP_SRC.ss58_address)
+        self.w3 = Web3(Web3.HTTPProvider(ETH_URL))
+        self.substrate = SubstrateInterface(url=WS_URL)
+        self.eth_kp_src = Keypair.create_from_private_key(ETH_PRIVATE_KEY, crypto_type=KeypairType.ECDSA)
+        self.account = calculate_evm_account_hex(self.eth_kp_src.ss58_address)
+        self.contract = get_contract(self.w3, RBAC_ADDRESS, ABI_FILE)
+
     def test_add_role_and_check(self):
 
-        substrate = self._substrate
-        eth_src = self._eth_src
-        w3 = self._w3
-        eth_kp_src = self._eth_kp_src
-        account = self._account
-
         # Setup eth_ko_src with some tokens
-        transfer(substrate, KP_SRC, calculate_evm_account(eth_src), TOKEN_NUM)
-        bl_hash = call_eth_transfer_a_lot(substrate, KP_SRC, eth_src, eth_kp_src.ss58_address.lower())
+        transfer(self.substrate, KP_SRC, calculate_evm_account(self.eth_src), TOKEN_NUM)
+        bl_hash = call_eth_transfer_a_lot(self.substrate, KP_SRC, self.eth_src, self.eth_kp_src.ss58_address.lower())
 
         # verify tokens have been transferred
-        self.assertTrue(bl_hash, f'Failed to transfer token to {eth_kp_src.ss58_address}')
+        self.assertTrue(bl_hash, f'Failed to transfer token to {self.eth_kp_src.ss58_address}')
 
         # populate contract interface
-        contract = get_contract(w3, RBAC_ADDRESS, ABI_FILE)
+        contract = get_contract(self.w3, RBAC_ADDRESS, ABI_FILE)
 
         # Execute: Add Role
-        tx_receipt = _eth_add_role(substrate, w3, contract, eth_kp_src, ROLE_ID_1, ROLE_ID_1_NAME)
+        tx_receipt = self._eth_add_role(ROLE_IDS[0], ROLE_ID_NAMES[0])
         self.assertEqual(tx_receipt['status'], TX_SUCCESS_STATUS)
         block_idx = tx_receipt['blockNumber']
 
         # Check: Add Role
         event = contract.events.RoleAdded.create_filter(fromBlock=block_idx, toBlock=block_idx)
-        self.check_item_from_event(event, eth_kp_src.ss58_address, ROLE_ID_1, ROLE_ID_1_NAME)
+        self.check_item_from_event(event, self.eth_kp_src.ss58_address, ROLE_IDS[0], ROLE_ID_NAMES[0])
 
         # Execute: Fetch Role
-        data = contract.functions.fetch_role(account, ROLE_ID_1).call()
+        data = contract.functions.fetch_role(self.account, ROLE_IDS[0]).call()
 
         # Check: Fetch Role
-        self.assertEqual(data[1], ROLE_ID_1_NAME)
+        self.assertEqual(data[1], ROLE_ID_NAMES[0])
