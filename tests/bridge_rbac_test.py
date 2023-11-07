@@ -24,13 +24,16 @@ ABI_FILE = 'ETH/rbac/rbac.sol.json'
 # Number of tokens with decimals
 TOKEN_NUM = 10000 * pow(10, 15)
 
+
 # generates list of `length` random utf-8 encoded hex strings of length 15
 def generate_random_hex_list(strlen, listlen):
-    return [ generate_random_hex(strlen).encode("utf-8") for i in range(listlen) ]
+    return [generate_random_hex(strlen).encode("utf-8") for i in range(listlen)]
+
 
 # returns list of utf-8 encoded hex strings from a list of strings
 def str_to_utf8_encoded_list(list):
     return list(map(lambda name: name.encode("utf-8")), list)
+
 
 ##############################################################################
 # Constants for global test-setup defaults
@@ -84,13 +87,11 @@ class TestBridgeRbac(unittest.TestCase):
         )
         return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
 
-
     def _eth_update_role(self, role_id, name):
         tx = self.contract.functions.update_role(role_id, name).build_transaction(
             _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
-
 
     def _eth_disable_role(self, role_id):
         tx = self.contract.functions.disable_role(role_id).build_transaction(
@@ -99,10 +100,10 @@ class TestBridgeRbac(unittest.TestCase):
         return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
 
     def _assign_role_to_user(self, role_id, user_id):
-            tx = self.contract.functions.assign_role_to_user(role_id, user_id).build_transaction(
-            _calcualte_evm_basic_req(self.substrate,self. w3, self.eth_kp_src.ss58_address)
+        tx = self.contract.functions.assign_role_to_user(role_id, user_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
         )
-            return _sign_and_submit_transaction(self.tx, self.w3, self.eth_kp_src)
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
 
     def check_item_from_event(self, event, account, role_id, name):
         events = event.get_all_entries()
