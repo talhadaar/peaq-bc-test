@@ -39,9 +39,6 @@ def str_to_utf8_encoded_list(list):
 # Constants for global test-setup defaults
 ##############################################################################
 
-ROLE_ID_1 = generate_random_hex_list(15, 5)
-ROLE_ID_1_NAME = generate_random_hex_list(15, 5)
-
 USER_IDS = generate_random_hex_list(15, 5)
 
 PERMISSION_IDS = generate_random_hex_list(15, 5)
@@ -74,12 +71,12 @@ def _sign_and_submit_transaction(tx, w3, signer):
     tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
     return w3.eth.wait_for_transaction_receipt(tx_hash)
 
-##############################################################################
-# Wrapper functions for state chainging extrinsics
-##############################################################################
-
 
 class TestBridgeRbac(unittest.TestCase):
+
+    ##############################################################################
+    # Wrapper functions for state chainging extrinsics
+    ##############################################################################
 
     def _eth_add_role(self, role_id, name):
         tx = self.contract.functions.add_role(role_id, name).build_transaction(
@@ -101,6 +98,84 @@ class TestBridgeRbac(unittest.TestCase):
 
     def _assign_role_to_user(self, role_id, user_id):
         tx = self.contract.functions.assign_role_to_user(role_id, user_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _unassign_role_to_user(self, role_id, user_id):
+        tx = self.contract.functions.unassign_role_to_user(role_id, user_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _add_permission(self, permission_id, name):
+        tx = self.contract.functions.add_permission(permission_id, name).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _update_permission(self, permission_id, name):
+        tx = self.contract.functions.update_permission(permission_id, name).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _disable_permission(self, permission_id):
+        tx = self.contract.functions.disable_permission(permission_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _assign_permission_to_role(self, permission_id, role_id):
+        tx = self.contract.functions.assign_permission_to_role(permission_id, role_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _unassign_permission_to_role(self, permission_id, role_id):
+        tx = self.contract.functions.unassign_permission_to_role(permission_id, role_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _add_group(self, group_id, name):
+        tx = self.contract.functions.add_group(group_id, name).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _update_group(self, group_id, name):
+        tx = self.contract.functions.update_group(group_id, name).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _disable_group(self, group_id):
+        tx = self.contract.functions.disable_group(group_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _assign_role_to_group(self, role_id, group_id):
+        tx = self.contract.functions.assign_role_to_group(role_id, group_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _unassign_role_to_group(self, role_id, group_id):
+        tx = self.contract.functions.unassign_role_to_group(role_id, group_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _assign_user_to_group(self, user_id, group_id):
+        tx = self.contract.functions.assign_user_to_group(user_id, group_id).build_transaction(
+            _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
+        )
+        return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
+
+    def _unassign_user_to_group(self, user_id, group_id):
+        tx = self.contract.functions.unassign_user_to_group(user_id, group_id).build_transaction(
             _calcualte_evm_basic_req(self.substrate, self.w3, self.eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self.w3, self.eth_kp_src)
