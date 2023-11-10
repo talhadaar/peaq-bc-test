@@ -78,19 +78,19 @@ class TestBridgeRbac(unittest.TestCase):
     # Wrapper functions for state chainging extrinsics
     ##############################################################################
 
-    def _eth_add_role(self, role_id, name):
+    def _add_role(self, role_id, name):
         tx = self._contract.functions.add_role(role_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
-    def _eth_update_role(self, role_id, name):
+    def _update_role(self, role_id, name):
         tx = self._contract.functions.update_role(role_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
-    def _eth_disable_role(self, role_id):
+    def _disable_role(self, role_id):
         tx = self._contract.functions.disable_role(role_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
@@ -207,7 +207,7 @@ class TestBridgeRbac(unittest.TestCase):
         contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
 
         # Execute: Add Role
-        tx_receipt = self._eth_add_role(ROLE_IDS[0], ROLE_ID_NAMES[0])
+        tx_receipt = self._add_role(ROLE_IDS[0], ROLE_ID_NAMES[0])
         self.assertEqual(tx_receipt['status'], TX_SUCCESS_STATUS)
         block_idx = tx_receipt['blockNumber']
 
