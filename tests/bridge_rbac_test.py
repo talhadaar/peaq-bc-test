@@ -24,6 +24,13 @@ ABI_FILE = 'ETH/rbac/rbac.sol.json'
 # Number of tokens with decimals
 TOKEN_NUM = 10000 * pow(10, 15)
 
+# TX RECEIPT DICT AND INDEXES
+ADD_ROLE_IDX = 0
+ADD_PERMISSION_IDX = 1
+ADD_GROUP_IDX = 2
+DISABLE_GROUP_IDX = 3
+
+TX_RECIEPTS = { ADD_ROLE_IDX:[], ADD_PERMISSION_IDX:[], ADD_GROUP_IDX:[], DISABLE_GROUP_IDX:[] }
 
 # generates list of `length` random utf-8 encoded hex strings of length 15
 def generate_random_hex_list(strlen, listlen):
@@ -39,16 +46,16 @@ def str_to_utf8_encoded_list(strlist):
 # Constants for global test-setup defaults
 ##############################################################################
 
-USER_IDS = generate_random_hex_list(15, 5)
+USER_IDS = generate_random_hex_list(15, 3)
 
-PERMISSION_IDS = generate_random_hex_list(15, 5)
-PERMISSION_ID_NAMES = str_to_utf8_encoded_list(["PERMISSION1", "PERMISSION2", "PERMISSION3", "PERMISSION4", "PERMISSION5"])
+PERMISSION_IDS = generate_random_hex_list(15, 3)
+PERMISSION_ID_NAMES = str_to_utf8_encoded_list(["PERMISSION1", "PERMISSION2", "PERMISSION3"])
 
-ROLE_IDS = generate_random_hex_list(15, 5)
-ROLE_ID_NAMES = str_to_utf8_encoded_list(["ROLE1", "ROLE2", "ROLE3", "ROLE4", "ROLE5"])
+ROLE_IDS = generate_random_hex_list(15, 3)
+ROLE_ID_NAMES = str_to_utf8_encoded_list(["ROLE1", "ROLE2", "ROLE3"])
 
-GROUP_IDS = generate_random_hex_list(15, 5)
-GROUP_ID_NAMES = str_to_utf8_encoded_list(["GROUP1", "GROUP2", "GROUP3", "GROUP4", "GROUP5"])
+GROUP_IDS = generate_random_hex_list(15, 3)
+GROUP_ID_NAMES = str_to_utf8_encoded_list(["GROUP1", "GROUP2", "GROUP3"])
 
 
 ##############################################################################
@@ -179,6 +186,44 @@ class TestBridgeRbac(unittest.TestCase):
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
+
+    # Sets up initial state of RBAC bridge and populates TX_RECIEPTS dict
+    # NOTE: GROUP_IDS[2] is disabled
+    def setup_rbac_bridge_initial_state(self):
+        #   |u0|u1|u2|r0|r1|r2|g0|g1|g2|
+        # -----------------------------|
+        # u0|  |  |  |xx|  |  |xx|  |  |
+        # u1|  |  |  |  |xx|  |  |xx|  |
+        # u2|  |  |  |  |  |  |  |  |  |
+        # r0|  |  |  |  |  |  |xx|  |  |
+        # r1|  |  |  |  |  |  |  |xx|  |
+        # r2|  |  |  |  |  |  |  |  |  |
+        # g0|  |  |  |  |  |  |  |  |  |
+        # g1|  |  |  |  |  |  |  |  |  |
+        # g2|  |  |  |  |  |  |  |  |  |
+        # p0|  |  |  |xx|  |  |xx|  |  |
+        # p1|  |  |  |  |xx|  |  |xx|  |
+        # p2|  |  |  |  |  |  |  |  |  |
+
+        # add roles
+        for i in zip(ROLE_IDS, ROLE_ID_NAMES):
+            TX_RECIEPTS[ADD_ROLE_IDX].append(self._add_role(i[0], i[1]))
+
+        # add permissions
+        for i in zip(PERMISSION_IDS, PERMISSION_ID_NAMES):
+            TX_RECIEPTS[ADD_PERMISSION_IDX].append(self._add_permission(i[0], i[1]))
+
+        # add groups
+        for i in zip(GROUP_IDS, GROUP_ID_NAMES):
+            TX_RECIEPTS[ADD_GROUP_IDX].append(self._add_group(i[0], i[1]))
+
+        # assign users to roles
+
+
+        # disable GROUP_IDS[2]
+        TX_RECIEPTS[DISABLE_GROUP_IDX].append(self._disable_group(GROUP_IDS[2]))
+
+
 
     def check_item_from_event(self, event, account, role_id, name):
         events = event.get_all_entries()
