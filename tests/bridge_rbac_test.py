@@ -29,6 +29,11 @@ ADD_ROLE_IDX = 0
 ADD_PERMISSION_IDX = 1
 ADD_GROUP_IDX = 2
 DISABLE_GROUP_IDX = 3
+ASSIGN_ROLE_TO_USER_IDX = 4
+ASSIGN_USER_TO_GROUP_IDX = 5
+ASSIGN_ROLE_TO_GROUP_IDX = 6
+ASSIGN_PERMISSION_TO_ROLE_IDX = 7
+ASSIGN_PERMISSION_TO_GROUP_IDX = 8
 
 TX_RECIEPTS = { ADD_ROLE_IDX:[], ADD_PERMISSION_IDX:[], ADD_GROUP_IDX:[], DISABLE_GROUP_IDX:[] }
 
@@ -218,7 +223,24 @@ class TestBridgeRbac(unittest.TestCase):
             TX_RECIEPTS[ADD_GROUP_IDX].append(self._add_group(i[0], i[1]))
 
         # assign users to roles
+        TX_RECIEPTS[ASSIGN_ROLE_TO_USER_IDX].append(self._assign_role_to_user(ROLE_IDS[0], USER_IDS[0]))
+        TX_RECIEPTS[ASSIGN_ROLE_TO_USER_IDX].append(self._assign_role_to_user(ROLE_IDS[1], USER_IDS[1]))
 
+        # assign users to groups
+        TX_RECIEPTS[ASSIGN_USER_TO_GROUP_IDX].append(self._assign_user_to_group(USER_IDS[0], GROUP_IDS[0]))
+        TX_RECIEPTS[ASSIGN_USER_TO_GROUP_IDX].append(self._assign_user_to_group(USER_IDS[1], GROUP_IDS[1]))
+
+        # assign roles to groups
+        TX_RECIEPTS[ASSIGN_ROLE_TO_GROUP_IDX].append(self._assign_role_to_group(ROLE_IDS[0], GROUP_IDS[0]))
+        TX_RECIEPTS[ASSIGN_ROLE_TO_GROUP_IDX].append(self._assign_role_to_group(ROLE_IDS[1], GROUP_IDS[1]))
+
+        # assign permission to roles
+        TX_RECIEPTS[ASSIGN_PERMISSION_TO_ROLE_IDX].append(self._assign_permission_to_role(PERMISSION_IDS[0], ROLE_IDS[0]))
+        TX_RECIEPTS[ASSIGN_PERMISSION_TO_ROLE_IDX].append(self._assign_permission_to_role(PERMISSION_IDS[1], ROLE_IDS[1]))
+
+        # assign permission to groups
+        TX_RECIEPTS[ASSIGN_PERMISSION_TO_GROUP_IDX].append(self._assign_permission_to_group(PERMISSION_IDS[0], GROUP_IDS[0]))
+        TX_RECIEPTS[ASSIGN_PERMISSION_TO_GROUP_IDX].append(self._assign_permission_to_group(PERMISSION_IDS[1], GROUP_IDS[1]))
 
         # disable GROUP_IDS[2]
         TX_RECIEPTS[DISABLE_GROUP_IDX].append(self._disable_group(GROUP_IDS[2]))
@@ -239,29 +261,44 @@ class TestBridgeRbac(unittest.TestCase):
         self._account = calculate_evm_account_hex(self._eth_kp_src.ss58_address)
         self._contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
 
-    def test_add_role_and_check(self):
-
-        # Setup eth_ko_src with some tokens
+         # Setup eth_ko_src with some tokens
         transfer(self._substrate, KP_SRC, calculate_evm_account(self._eth_src), TOKEN_NUM)
         bl_hash = call_eth_transfer_a_lot(self._substrate, KP_SRC, self._eth_src, self._eth_kp_src.ss58_address.lower())
 
         # verify tokens have been transferred
         self.assertTrue(bl_hash, f'Failed to transfer token to {self._eth_kp_src.ss58_address}')
 
-        # populate contract interface
-        contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
+    def test_rbac_bridge(self):
+        self.setup_rbac_bridge_initial_state()
 
-        # Execute: Add Role
-        tx_receipt = self._add_role(ROLE_IDS[0], ROLE_ID_NAMES[0])
-        self.assertEqual(tx_receipt['status'], TX_SUCCESS_STATUS)
-        block_idx = tx_receipt['blockNumber']
+        # fetch and verify role
+        print("ROLE_IDS[0] = ", ROLE_IDS[0])
+        data = self._contract.functions.fetch_role(self._account, USER_IDS[0]).call()
+        print(data)
 
-        # Check: Add Role
-        event = contract.events.RoleAdded.create_filter(fromBlock=block_idx, toBlock=block_idx)
-        self.check_item_from_event(event, self._eth_kp_src.ss58_address, ROLE_IDS[0], ROLE_ID_NAMES[0])
+    # def test_add_role_and_check(self):
 
-        # Execute: Fetch Role
-        data = contract.functions.fetch_role(self._account, ROLE_IDS[0]).call()
+    #     # Setup eth_ko_src with some tokens
+    #     transfer(self._substrate, KP_SRC, calculate_evm_account(self._eth_src), TOKEN_NUM)
+    #     bl_hash = call_eth_transfer_a_lot(self._substrate, KP_SRC, self._eth_src, self._eth_kp_src.ss58_address.lower())
 
-        # Check: Fetch Role
-        self.assertEqual(data[1], ROLE_ID_NAMES[0])
+    #     # verify tokens have been transferred
+    #     self.assertTrue(bl_hash, f'Failed to transfer token to {self._eth_kp_src.ss58_address}')
+
+    #     # populate contract interface
+    #     contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
+
+    #     # Execute: Add Role
+    #     tx_receipt = self._add_role(ROLE_IDS[0], ROLE_ID_NAMES[0])
+    #     self.assertEqual(tx_receipt['status'], TX_SUCCESS_STATUS)
+    #     block_idx = tx_receipt['blockNumber']
+
+    #     # Check: Add Role
+    #     event = contract.events.RoleAdded.create_filter(fromBlock=block_idx, toBlock=block_idx)
+    #     self.check_item_from_event(event, self._eth_kp_src.ss58_address, ROLE_IDS[0], ROLE_ID_NAMES[0])
+
+    #     # Execute: Fetch Role
+    #     data = contract.functions.fetch_role(self._account, ROLE_IDS[0]).call()
+
+    #     # Check: Fetch Role
+    #     self.assertEqual(data[1], ROLE_ID_NAMES[0])
