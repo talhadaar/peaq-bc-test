@@ -939,7 +939,7 @@
 			},
 			{
 				"internalType": "bytes32",
-				"name": "role",
+				"name": "entity",
 				"type": "bytes32"
 			}
 		],
@@ -1012,11 +1012,6 @@
 			{
 				"internalType": "bytes32",
 				"name": "owner",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "role",
 				"type": "bytes32"
 			}
 		],

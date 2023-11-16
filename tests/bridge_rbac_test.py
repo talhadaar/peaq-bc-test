@@ -24,18 +24,6 @@ ABI_FILE = 'ETH/rbac/rbac.sol.json'
 # Number of tokens with decimals
 TOKEN_NUM = 10000 * pow(10, 15)
 
-# TX RECEIPT DICT AND INDEXES
-ADD_ROLE_IDX = 0
-ADD_PERMISSION_IDX = 1
-ADD_GROUP_IDX = 2
-DISABLE_GROUP_IDX = 3
-ASSIGN_ROLE_TO_USER_IDX = 4
-ASSIGN_USER_TO_GROUP_IDX = 5
-ASSIGN_ROLE_TO_GROUP_IDX = 6
-ASSIGN_PERMISSION_TO_ROLE_IDX = 7
-ASSIGN_PERMISSION_TO_GROUP_IDX = 8
-
-TX_RECIEPTS = { ADD_ROLE_IDX:[], ADD_PERMISSION_IDX:[], ADD_GROUP_IDX:[], DISABLE_GROUP_IDX:[] }
 
 # generates list of `length` random utf-8 encoded hex strings of length 15
 def generate_random_hex_list(strlen, listlen):
@@ -192,9 +180,73 @@ class TestBridgeRbac(unittest.TestCase):
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
-    # Sets up initial state of RBAC bridge and populates TX_RECIEPTS dict
-    # NOTE: GROUP_IDS[2] is disabled
-    def setup_rbac_bridge_initial_state(self):
+    ##############################################################################
+    # Functions that verify mutations
+    ##############################################################################
+    
+    def _verify_role_mutation_event(self, events, account, role_id, name):
+        self.assertEqual(events[0]['args']['sender'], account)
+        self.assertEqual(events[0]['args']['role_id'], role_id)
+        self.assertEqual(events[0]['args']['name'], name)
+
+    def _verify_add_role(self, role_id, name):
+        tx = self._add_role(role_id, name)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.RoleAdded.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_role_mutation_event(events, self._eth_kp_src.ss58_address, role_id, name)
+
+        # fetch role and verify
+        data = self._contract.functions.fetch_role(self._account, role_id).call()
+        self.assertEqual(data[0], role_id)
+        self.assertEqual(data[1], name)
+
+        return tx
+    
+    def _verify_update_role(self, role_id, name):
+        tx = self._update_role(role_id, name)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.RoleUpdated.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_role_mutation_event(events, self._eth_kp_src.ss58_address, role_id, name)
+
+        # fetch role and verify
+        data = self._contract.functions.fetch_role(self._account, role_id).call()
+        self.assertEqual(data[0], role_id)
+        self.assertEqual(data[1], name)
+
+        return tx
+    
+    def _verify_disable_role(self, role_id):
+        tx = self._disable_role(role_id)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.RoleRemoved.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self.assertEqual(events[0]['args']['sender'], self._eth_kp_src.ss58_address)
+        self.assertEqual(events[0]['args']['role_id'], role_id)
+
+        # fetch role and verify
+        data = self._contract.functions.fetch_role(self._account, role_id).call()
+        self.assertEqual(data[0], role_id)
+        self.assertEqual(data[2], False)
+
+        return tx
+    
+    def setUp(self):
+        self._eth_src = calculate_evm_addr(KP_SRC.ss58_address)
+        self._w3 = Web3(Web3.HTTPProvider(ETH_URL))
+        self._substrate = SubstrateInterface(url=WS_URL)
+        self._eth_kp_src = Keypair.create_from_private_key(ETH_PRIVATE_KEY, crypto_type=KeypairType.ECDSA)
+        self._account = calculate_evm_account_hex(self._eth_kp_src.ss58_address)
+        self._contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
+
+    def test_rbac_bridge(self):
         #   |u0|u1|u2|r0|r1|r2|g0|g1|g2|
         # -----------------------------|
         # u0|  |  |  |xx|  |  |xx|  |  |
@@ -210,95 +262,13 @@ class TestBridgeRbac(unittest.TestCase):
         # p1|  |  |  |  |xx|  |  |xx|  |
         # p2|  |  |  |  |  |  |  |  |  |
 
-        # add roles
-        for i in zip(ROLE_IDS, ROLE_ID_NAMES):
-            TX_RECIEPTS[ADD_ROLE_IDX].append(self._add_role(i[0], i[1]))
-
-        # add permissions
-        for i in zip(PERMISSION_IDS, PERMISSION_ID_NAMES):
-            TX_RECIEPTS[ADD_PERMISSION_IDX].append(self._add_permission(i[0], i[1]))
-
-        # add groups
-        for i in zip(GROUP_IDS, GROUP_ID_NAMES):
-            TX_RECIEPTS[ADD_GROUP_IDX].append(self._add_group(i[0], i[1]))
-
-        # assign users to roles
-        TX_RECIEPTS[ASSIGN_ROLE_TO_USER_IDX].append(self._assign_role_to_user(ROLE_IDS[0], USER_IDS[0]))
-        TX_RECIEPTS[ASSIGN_ROLE_TO_USER_IDX].append(self._assign_role_to_user(ROLE_IDS[1], USER_IDS[1]))
-
-        # assign users to groups
-        TX_RECIEPTS[ASSIGN_USER_TO_GROUP_IDX].append(self._assign_user_to_group(USER_IDS[0], GROUP_IDS[0]))
-        TX_RECIEPTS[ASSIGN_USER_TO_GROUP_IDX].append(self._assign_user_to_group(USER_IDS[1], GROUP_IDS[1]))
-
-        # assign roles to groups
-        TX_RECIEPTS[ASSIGN_ROLE_TO_GROUP_IDX].append(self._assign_role_to_group(ROLE_IDS[0], GROUP_IDS[0]))
-        TX_RECIEPTS[ASSIGN_ROLE_TO_GROUP_IDX].append(self._assign_role_to_group(ROLE_IDS[1], GROUP_IDS[1]))
-
-        # assign permission to roles
-        TX_RECIEPTS[ASSIGN_PERMISSION_TO_ROLE_IDX].append(self._assign_permission_to_role(PERMISSION_IDS[0], ROLE_IDS[0]))
-        TX_RECIEPTS[ASSIGN_PERMISSION_TO_ROLE_IDX].append(self._assign_permission_to_role(PERMISSION_IDS[1], ROLE_IDS[1]))
-
-        # assign permission to groups
-        TX_RECIEPTS[ASSIGN_PERMISSION_TO_GROUP_IDX].append(self._assign_permission_to_group(PERMISSION_IDS[0], GROUP_IDS[0]))
-        TX_RECIEPTS[ASSIGN_PERMISSION_TO_GROUP_IDX].append(self._assign_permission_to_group(PERMISSION_IDS[1], GROUP_IDS[1]))
-
-        # disable GROUP_IDS[2]
-        TX_RECIEPTS[DISABLE_GROUP_IDX].append(self._disable_group(GROUP_IDS[2]))
-
-
-
-    def check_item_from_event(self, event, account, role_id, name):
-        events = event.get_all_entries()
-        self.assertEqual(events[0]['args']['sender'], account)
-        self.assertEqual(events[0]['args']['role_id'], role_id)
-        self.assertEqual(events[0]['args']['name'], name)
-
-    def setUp(self):
-        self._eth_src = calculate_evm_addr(KP_SRC.ss58_address)
-        self._w3 = Web3(Web3.HTTPProvider(ETH_URL))
-        self._substrate = SubstrateInterface(url=WS_URL)
-        self._eth_kp_src = Keypair.create_from_private_key(ETH_PRIVATE_KEY, crypto_type=KeypairType.ECDSA)
-        self._account = calculate_evm_account_hex(self._eth_kp_src.ss58_address)
-        self._contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
-
-         # Setup eth_ko_src with some tokens
+        # Setup eth_ko_src with some tokens
         transfer(self._substrate, KP_SRC, calculate_evm_account(self._eth_src), TOKEN_NUM)
         bl_hash = call_eth_transfer_a_lot(self._substrate, KP_SRC, self._eth_src, self._eth_kp_src.ss58_address.lower())
 
         # verify tokens have been transferred
         self.assertTrue(bl_hash, f'Failed to transfer token to {self._eth_kp_src.ss58_address}')
 
-    def test_rbac_bridge(self):
-        self.setup_rbac_bridge_initial_state()
-
-        # fetch and verify role
-        print("ROLE_IDS[0] = ", ROLE_IDS[0])
-        data = self._contract.functions.fetch_role(self._account, USER_IDS[0]).call()
-        print(data)
-
-    # def test_add_role_and_check(self):
-
-    #     # Setup eth_ko_src with some tokens
-    #     transfer(self._substrate, KP_SRC, calculate_evm_account(self._eth_src), TOKEN_NUM)
-    #     bl_hash = call_eth_transfer_a_lot(self._substrate, KP_SRC, self._eth_src, self._eth_kp_src.ss58_address.lower())
-
-    #     # verify tokens have been transferred
-    #     self.assertTrue(bl_hash, f'Failed to transfer token to {self._eth_kp_src.ss58_address}')
-
-    #     # populate contract interface
-    #     contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
-
-    #     # Execute: Add Role
-    #     tx_receipt = self._add_role(ROLE_IDS[0], ROLE_ID_NAMES[0])
-    #     self.assertEqual(tx_receipt['status'], TX_SUCCESS_STATUS)
-    #     block_idx = tx_receipt['blockNumber']
-
-    #     # Check: Add Role
-    #     event = contract.events.RoleAdded.create_filter(fromBlock=block_idx, toBlock=block_idx)
-    #     self.check_item_from_event(event, self._eth_kp_src.ss58_address, ROLE_IDS[0], ROLE_ID_NAMES[0])
-
-    #     # Execute: Fetch Role
-    #     data = contract.functions.fetch_role(self._account, ROLE_IDS[0]).call()
-
-    #     # Check: Fetch Role
-    #     self.assertEqual(data[1], ROLE_ID_NAMES[0])
+        self._verify_add_role(ROLE_IDS[0], ROLE_ID_NAMES[0])
+        self._verify_update_role(ROLE_IDS[0], ROLE_ID_NAMES[2])
+        # self._verify_disable_role(ROLE_IDS[0])
