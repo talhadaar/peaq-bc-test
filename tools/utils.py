@@ -498,8 +498,11 @@ def get_collators(substrate, key):
     )
 
 
-def get_block_height(substrate):
-    latest_block = substrate.get_block()
+def get_block_height(substrate, block_hash=None):
+    if block_hash:
+        latest_block = substrate.get_block(block_hash=block_hash)
+    else:
+        latest_block = substrate.get_block()
     return latest_block['header']['number']
 
 
@@ -769,6 +772,15 @@ def wait_for_n_blocks(substrate, n=1):
             print(f'Current block: {height}, but waiting at {wait_height}')
             height = next_height
             past = past + 1
+
+
+def get_event(substrate, block_hash, pallet, event_name):
+    for event in substrate.get_events(block_hash):
+        if event.value['module_id'] != pallet or \
+           event.value['event_id'] != event_name:
+            continue
+        return event['event']
+    return None
 
 
 if __name__ == '__main__':

@@ -5,7 +5,8 @@ from substrateinterface import SubstrateInterface, Keypair
 from tools.utils import WS_URL, get_chain, get_collators, get_block_height, get_account_balance, get_block_hash
 from tools.utils import KP_GLOBAL_SUDO, exist_pallet, KP_COLLATOR
 from tools.payload import sudo_call_compose, sudo_extrinsic_send, user_extrinsic_send
-from tools.utils import ExtrinsicBatch
+from tools.utils import ExtrinsicBatch, get_event
+from tools.runtime_upgrade import wait_until_block_height
 from tests.utils_func import restart_parachain_and_runtime_upgrade
 import warnings
 
@@ -70,6 +71,9 @@ def set_reward_rate(substrate, collator, delegator):
 
 class TestDelegator(unittest.TestCase):
     def setUp(self):
+        restart_parachain_and_runtime_upgrade()
+        wait_until_block_height(SubstrateInterface(url=WS_URL), 1)
+
         self.substrate = SubstrateInterface(
             url=WS_URL,
         )
@@ -80,8 +84,25 @@ class TestDelegator(unittest.TestCase):
             Keypair.create_from_mnemonic(Keypair.generate_mnemonic())
         ]
 
-    def tearDown(self):
-        restart_parachain_and_runtime_upgrade()
+    def get_block_reward(self):
+        block_reward = self.substrate.query(
+            module='BlockReward',
+            storage_function='DailyBlockReward',
+        )
+        block_reward = int(str(block_reward['avg']))
+        config = self.substrate.query(
+            module='BlockReward',
+            storage_function='RewardDistributionConfigStorage',
+        )
+        config = config.value
+        collator_percent = config['collators_percent'] / sum(config.values())
+        return block_reward * collator_percent
+
+    def get_parachain_reward(self, block_hash):
+        event = get_event(self.substrate, block_hash, 'ParachainStaking', 'Rewarded')
+        if not event:
+            return None
+        return int(str(event[1][1][1]))
 
     def get_balance_difference(self, addr):
         current_height = get_block_height(self.substrate)
@@ -99,6 +120,36 @@ class TestDelegator(unittest.TestCase):
             if str(collator['delegators']) == '[]':
                 return collator
         return None
+
+    def claim_delegate_reward(self, kp):
+        batch = ExtrinsicBatch(self.substrate, kp)
+        batch.compose_call(
+            'ParachainStaking',
+            'increment_delegator_rewards',
+            {}
+        )
+
+        batch.compose_call(
+            'ParachainStaking',
+            'claim_rewards',
+            {}
+        )
+        return batch.execute()
+
+    def claim_collator_reward(self, kp):
+        batch = ExtrinsicBatch(self.substrate, kp)
+        batch.compose_call(
+            'ParachainStaking',
+            'increment_collator_rewards',
+            {}
+        )
+
+        batch.compose_call(
+            'ParachainStaking',
+            'claim_rewards',
+            {}
+        )
+        return batch.execute()
 
     def wait_get_reward(self, addr):
         time.sleep(12 * 2)
@@ -119,45 +170,6 @@ class TestDelegator(unittest.TestCase):
             'new_free': amount,
             'new_reserved': 0
         })
-
-    def test_issue_fixed_precentage(self):
-        if not exist_pallet(self.substrate, 'StakingFixedRewardCalculator'):
-            warnings.warn('StakingFixedRewardCalculator pallet not exist, skip the test')
-            return
-
-        collator_percentage = 80
-        delegator_percentage = 20
-
-        # Check it's the peaq-dev parachain
-        self.assertTrue(self.chain_name in ['peaq-dev', 'peaq-dev-fork'])
-        batch = ExtrinsicBatch(self.substrate, KP_GLOBAL_SUDO)
-        batch.compose_sudo_call('StakingFixedRewardCalculator', 'set_reward_rate', {
-            'collator_rate': collator_percentage,
-            'delegator_rate': delegator_percentage,
-        })
-        self.batch_fund(batch, self.delegators[0], 10000 * 10 ** 18)
-        self.batch_fund(batch, self.delegators[1], 10000 * 10 ** 18)
-        batch.execute_n_clear()
-
-        # setup
-        # Get the collator account
-        collator = self.get_one_collator_without_delegator(self.collator)
-        self.assertNotEqual(collator, None)
-
-        # Add the delegator
-        receipt = add_delegator(self.substrate, self.delegators[0], str(collator['id']), int(str(collator['stake'])))
-        self.assertTrue(receipt.is_success, 'Add delegator failed')
-        receipt = add_delegator(self.substrate, self.delegators[1], str(collator['id']), int(str(collator['stake'])))
-        self.assertTrue(receipt.is_success, 'Add delegator failed')
-
-        print('Wait for delegator get reward')
-        self.assertTrue(self.wait_get_reward(self.delegators[0].ss58_address))
-
-        delegators_reward = [self.get_balance_difference(delegator.ss58_address) for delegator in self.delegators]
-        collator_reward = self.get_balance_difference(str(collator['id']))
-        self.assertEqual(delegators_reward[0], delegators_reward[1], 'The reward is not equal')
-        self.assertEqual(collator_percentage / delegators_reward * sum(delegators_reward),
-                         collator_reward, 'The reward is not equal')
 
     def internal_test_issue_coefficient(self, mega_tokens):
         if not exist_pallet(self.substrate, 'StakingCoefficientRewardCalculator'):
@@ -186,6 +198,9 @@ class TestDelegator(unittest.TestCase):
         # Get the collator account
         receipt = collator_stake_more(self.substrate, KP_COLLATOR, 5 * mega_tokens)
         self.assertTrue(receipt.is_success, 'Stake failed')
+        bl_hash = self.claim_collator_reward(KP_COLLATOR)
+        collator_0_start = get_block_height(self.substrate, bl_hash)
+        self.assertTrue(bl_hash, 'Claim reward failed')
 
         collator = self.get_one_collator_without_delegator(self.collator)
         self.assertGreaterEqual(int(str(collator['stake'])), 5 * mega_tokens)
@@ -194,22 +209,89 @@ class TestDelegator(unittest.TestCase):
         # Add the delegator
         receipt = add_delegator(self.substrate, self.delegators[0], str(collator['id']), int(str(collator['stake'])))
         self.assertTrue(receipt.is_success, 'Add delegator failed')
+        delegator_0_start = get_block_height(self.substrate, receipt.block_hash)
+
         receipt = add_delegator(self.substrate, self.delegators[1], str(collator['id']), int(str(collator['stake'])))
         self.assertTrue(receipt.is_success, 'Add delegator failed')
+        delegator_1_start = get_block_height(self.substrate, receipt.block_hash)
 
-        print('Wait for delegator get reward')
-        self.assertTrue(self.wait_get_reward(self.delegators[0].ss58_address))
+        self.assertTrue(bl_hash, 'Claim reward failed')
 
-        delegators_reward = [self.get_balance_difference(delegator.ss58_address) for delegator in self.delegators]
-        collator_reward = self.get_balance_difference(str(collator['id']))
-        self.assertEqual(delegators_reward[0], delegators_reward[1], 'The reward is not equal')
+        bl_hash = self.claim_delegate_reward(self.delegators[0])
+        delegator_0_reward = self.get_parachain_reward(bl_hash)
+        delegator_0_end = get_block_height(self.substrate, bl_hash)
+        self.assertTrue(bl_hash, 'Claim reward failed')
+
+        bl_hash = self.claim_delegate_reward(self.delegators[1])
+        delegator_1_reward = self.get_parachain_reward(bl_hash)
+        delegator_1_end = get_block_height(self.substrate, bl_hash)
+        self.assertTrue(bl_hash, 'Claim reward failed')
+
+        bl_hash = self.claim_collator_reward(KP_COLLATOR)
+        collator_0_reward = self.get_parachain_reward(bl_hash)
+        collator_0_end = get_block_height(self.substrate, bl_hash)
+        self.assertTrue(bl_hash, 'Claim reward failed')
+
+        delegator_0_avg_reward = delegator_0_reward / (delegator_0_end - delegator_0_start)
+        delegator_1_avg_reward = delegator_1_reward / (delegator_1_end - delegator_1_start)
+        collator_avg_reward = collator_0_reward / (collator_0_end - collator_0_start)
+        self.assertEqual(delegator_0_avg_reward, delegator_1_avg_reward,
+                         'The reward is not equal')
         self.assertAlmostEqual(
-            sum(delegators_reward) / collator_reward,
+            (delegator_0_avg_reward + delegator_1_avg_reward) / collator_avg_reward,
             1, 7,
-            f'{sum(delegators_reward)} v.s. {collator_reward} is not equal')
+            f'{delegator_0_avg_reward} + {delegator_1_avg_reward} v.s. {collator_avg_reward} is not equal')
 
     def test_issue_coeffective(self):
         self.internal_test_issue_coefficient(500000 * 10 ** 18)
 
     def test_issue_coeffective_large(self):
         self.internal_test_issue_coefficient(10 ** 15 * 10 ** 18)
+
+    def test_collator_stake(self):
+        block_reward = self.get_block_reward()
+
+        mega_tokens = 500000 * 10 ** 18
+        if not exist_pallet(self.substrate, 'StakingCoefficientRewardCalculator'):
+            warnings.warn('StakingCoefficientRewardCalculator pallet not exist, skip the test')
+            return
+
+        # Check it's the peaq-dev parachain
+        self.assertTrue(self.chain_name in ['peaq-dev', 'peaq-dev-fork', 'krest', 'krest-network-fork'])
+
+        batch = ExtrinsicBatch(self.substrate, KP_GLOBAL_SUDO)
+        batch.compose_sudo_call('BlockReward', 'set_max_currency_supply', {
+            'limit': 10 ** 5 * mega_tokens
+        })
+        batch.compose_sudo_call('ParachainStaking', 'set_max_candidate_stake', {
+            'new': 10 ** 5 * mega_tokens
+        })
+        batch.compose_sudo_call('StakingCoefficientRewardCalculator', 'set_coefficient', {
+            'coefficient': 2,
+        })
+        self.batch_fund(batch, KP_COLLATOR, 20 * mega_tokens)
+        bl_hash = batch.execute()
+        self.assertTrue(bl_hash, 'Batch failed')
+
+        # Get the collator account
+        batch = ExtrinsicBatch(self.substrate, KP_COLLATOR)
+        batch.compose_call(
+            'ParachainStaking',
+            'candidate_stake_more',
+            {'more': 5 * mega_tokens},
+        )
+        batch.compose_call(
+            'ParachainStaking',
+            'claim_rewards',
+            {}
+        )
+        bl_hash = batch.execute()
+        self.assertTrue(bl_hash, 'Claim reward failed')
+        collator_0_end = get_block_height(self.substrate, bl_hash)
+
+        collator_0_reward = self.get_parachain_reward(bl_hash)
+        collator_avg_reward = collator_0_reward / (collator_0_end - 0)
+        self.assertAlmostEqual(
+            collator_avg_reward / block_reward,
+            1, 7,
+            f'{collator_avg_reward} v.s. {block_reward} is not equal')

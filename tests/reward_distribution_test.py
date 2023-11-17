@@ -4,7 +4,7 @@ import pytest
 from substrateinterface import SubstrateInterface, Keypair
 from tools.utils import WS_URL, transfer_with_tip, TOKEN_NUM_BASE, get_account_balance, transfer
 from tools.utils import KP_COLLATOR, KP_GLOBAL_SUDO
-from tools.utils import setup_block_reward
+from tools.utils import setup_block_reward, get_event
 from tools.utils import ExtrinsicBatch
 import unittest
 from tests.utils_func import restart_parachain_and_runtime_upgrade
@@ -60,30 +60,22 @@ class TestRewardDistribution(unittest.TestCase):
         return int(str(block_reward))
 
     def get_parachain_reward(self, block_hash):
-        event = self._get_event(block_hash, 'ParachainStaking', 'Rewarded')
+        event = get_event(self._substrate, block_hash, 'ParachainStaking', 'Rewarded')
         if not event:
             return None
         return int(str(event[1][1][1]))
 
     def get_transaction_payment_fee_paid(self, block_hash):
-        event = self._get_event(block_hash, 'TransactionPayment', 'TransactionFeePaid')
+        event = get_event(self._substrate, block_hash, 'TransactionPayment', 'TransactionFeePaid')
         if not event:
             return None
         return int(str(event[1][1]['actual_fee']))
 
     def get_transaction_fee_distributed(self, block_hash):
-        event = self._get_event(block_hash, 'BlockReward', 'TransactionFeesDistributed')
+        event = get_event(self._substrate, block_hash, 'BlockReward', 'TransactionFeesDistributed')
         if not event:
             return None
         return int(str(event[1][1]))
-
-    def _get_event(self, block_hash, pallet, event_name):
-        for event in self._substrate.get_events(block_hash):
-            if event.value['module_id'] != pallet or \
-               event.value['event_id'] != event_name:
-                continue
-            return event['event']
-        return None
 
     def _check_transaction_fee_reward_from_sender(self, block_height):
         block_hash = self._substrate.get_block_hash(block_height)
