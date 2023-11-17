@@ -185,16 +185,53 @@ class TestBridgeRbac(unittest.TestCase):
     ##############################################################################
 
     # verify add/update role
-    def _verify_add_update_role_event(self, events, account, role_id, name):
+    def _verify_role_add_update_event(self, events, account, role_id, name):
         self.assertEqual(events[0]['args']['sender'], account)
         self.assertEqual(events[0]['args']['role_id'], role_id)
         self.assertEqual(events[0]['args']['name'], name)
 
+    def _verify_role_disabled_event(self, events, account, role_id):
+        self.assertEqual(events[0]['args']['sender'], account)
+        self.assertEqual(events[0]['args']['role_id'], role_id)
+
     # verify assign/unassign role to user
-    def _verify_assign_or_unassign_role_event(self, events, account, role_id, user_id):
+    def _verify_role_assign_or_unassign_event(self, events, account, role_id, user_id):
         self.assertEqual(events[0]['args']['sender'], account)
         self.assertEqual(events[0]['args']['role_id'], role_id)
         self.assertEqual(events[0]['args']['user_id'], user_id)
+
+    def _verify_permission_add_or_update_event(self, events, account, permission_id, name):
+        self.assertEqual(events[0]['args']['sender'], account)
+        self.assertEqual(events[0]['args']['permission_id'], permission_id)
+        self.assertEqual(events[0]['args']['name'], name)
+
+    def _verify_permission_disabled_event(self, events, account, permission_id):
+        self.assertEqual(events[0]['args']['sender'], account)
+        self.assertEqual(events[0]['args']['permission_id'], permission_id)
+
+    def _verify_permission_assigned_or_unassigned_to_role_event(self, events, account, permission_id, role_id):
+        self.assertEqual(events[0]['args']['sender'], account)
+        self.assertEqual(events[0]['args']['permission_id'], permission_id)
+        self.assertEqual(events[0]['args']['role_id'], role_id)
+
+    def _verify_group_add_or_update_event(self, events, account, group_id, name):
+        self.assertEqual(events[0]['args']['sender'], account)
+        self.assertEqual(events[0]['args']['group_id'], group_id)
+        self.assertEqual(events[0]['args']['name'], name)
+
+    def _verify_group_disabled_event(self, events, account, group_id):
+        self.assertEqual(events[0]['args']['sender'], account)
+        self.assertEqual(events[0]['args']['group_id'], group_id)
+
+    def _verify_role_assigned_or_unassigned_to_group_event(self, events, account, role_id, group_id):
+        self.assertEqual(events[0]['args']['sender'], account)
+        self.assertEqual(events[0]['args']['role_id'], role_id)
+        self.assertEqual(events[0]['args']['group_id'], group_id)
+
+    def _verify_user_assigned_or_unassigned_event(self, events, account, user_id, group_id):
+        self.assertEqual(events[0]['args']['sender'], account)
+        self.assertEqual(events[0]['args']['user_id'], user_id)
+        self.assertEqual(events[0]['args']['group_id'], group_id)
 
     ##############################################################################
     # Functions that verify mutations
@@ -207,7 +244,7 @@ class TestBridgeRbac(unittest.TestCase):
         # get block events and verify
         block_idx = tx['blockNumber']
         events = self._contract.events.RoleAdded.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
-        self._verify_add_update_role_event(events, self._eth_kp_src.ss58_address, role_id, name)
+        self._verify_role_add_update_event(events, self._eth_kp_src.ss58_address, role_id, name)
 
         # fetch role and verify
         data = self._contract.functions.fetch_role(self._account, role_id).call()
@@ -223,7 +260,7 @@ class TestBridgeRbac(unittest.TestCase):
         # get block events and verify
         block_idx = tx['blockNumber']
         events = self._contract.events.RoleUpdated.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
-        self._verify_add_update_role_event(events, self._eth_kp_src.ss58_address, role_id, name)
+        self._verify_role_add_update_event(events, self._eth_kp_src.ss58_address, role_id, name)
 
         # fetch role and verify
         data = self._contract.functions.fetch_role(self._account, role_id).call()
@@ -239,8 +276,7 @@ class TestBridgeRbac(unittest.TestCase):
         # get block events and verify
         block_idx = tx['blockNumber']
         events = self._contract.events.RoleRemoved.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
-        self.assertEqual(events[0]['args']['sender'], self._eth_kp_src.ss58_address)
-        self.assertEqual(events[0]['args']['role_id'], role_id)
+        self._verify_role_disabled_event(events, self._eth_kp_src.ss58_address, role_id)
 
         # fetch role and verify
         data = self._contract.functions.fetch_role(self._account, role_id).call()
@@ -256,7 +292,7 @@ class TestBridgeRbac(unittest.TestCase):
         # get block events and verify
         block_idx = tx['blockNumber']
         events = self._contract.events.RoleAssignedToUser.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
-        self._verify_assign_or_unassign_role_event(events, self._eth_kp_src.ss58_address, role_id, user_id)
+        self._verify_role_assign_or_unassign_event(events, self._eth_kp_src.ss58_address, role_id, user_id)
 
         # fetch role and verify
         data = self._contract.functions.fetch_user_roles(self._account, user_id).call()
@@ -271,7 +307,7 @@ class TestBridgeRbac(unittest.TestCase):
         # get block events and verify
         block_idx = tx['blockNumber']
         events = self._contract.events.RoleUnassignedToUser.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
-        self._verify_assign_or_unassign_role_event(events, self._eth_kp_src.ss58_address, role_id, user_id)
+        self._verify_role_assign_or_unassign_event(events, self._eth_kp_src.ss58_address, role_id, user_id)
 
         # fetch role and verify
         data = self._contract.functions.fetch_user_roles(self._account, user_id).call()
@@ -286,6 +322,7 @@ class TestBridgeRbac(unittest.TestCase):
         self._account = calculate_evm_account_hex(self._eth_kp_src.ss58_address)
         self._contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
 
+    # NOTE: fetch_user_roles will return an error if the user has no roles
     def test_rbac_bridge(self):
         #   |u0|u1|u2|r0|r1|r2|g0|g1|g2|
         # -----------------------------|
@@ -310,7 +347,9 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertTrue(bl_hash, f'Failed to transfer token to {self._eth_kp_src.ss58_address}')
 
         self._verify_add_role(ROLE_IDS[0], ROLE_ID_NAMES[0])
+        self._verify_add_role(ROLE_IDS[1], ROLE_ID_NAMES[1])
         self._verify_update_role(ROLE_IDS[0], ROLE_ID_NAMES[2])
         # self._verify_disable_role(ROLE_IDS[0])
         self._verify_assign_role_to_user(ROLE_IDS[0], USER_IDS[0])
+        self._verify_assign_role_to_user(ROLE_IDS[1], USER_IDS[0])
         self._verify_unassign_role_to_user(ROLE_IDS[0], USER_IDS[0])
