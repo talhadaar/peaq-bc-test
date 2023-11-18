@@ -93,15 +93,6 @@ STATE_INFOS = [{
 
 CONSTANT_INFOS = [{
     'module': 'ParachainStaking',
-    'storage_function': 'MaxCollatorsPerDelegator',
-    'type': {
-        'peaq-dev': 1,
-        'agung-network': 1,
-        'krest-network': 1,
-        'peaq-network': 1,
-    }
-}, {
-    'module': 'ParachainStaking',
     'storage_function': 'MaxDelegationsPerRound',
     'type': {
         'peaq-dev': 1,
@@ -144,15 +135,6 @@ CONSTANT_INFOS = [{
         'agung-network': 32000,
         'krest-network': 50000 * 10 ** 18,
         'peaq-network': 32000,
-    }
-}, {
-    'module': 'ParachainStaking',
-    'storage_function': 'MinDelegation',
-    'type': {
-        'peaq-dev': 20000,
-        'agung-network': 20000,
-        'krest-network': 100 * 10 ** 18,
-        'peaq-network': 20000,
     }
 }, {
     'module': 'ParachainStaking',
