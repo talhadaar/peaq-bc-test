@@ -2,7 +2,7 @@ import time
 import pytest
 
 from substrateinterface import SubstrateInterface, Keypair
-from tools.utils import WS_URL, transfer_with_tip, TOKEN_NUM_BASE, get_account_balance, transfer
+from tools.utils import WS_URL, transfer_with_tip, TOKEN_NUM_BASE, get_account_balance, transfer, get_block_height
 from tools.utils import KP_COLLATOR, KP_GLOBAL_SUDO
 from tools.utils import setup_block_reward, get_event
 from tools.utils import ExtrinsicBatch
@@ -51,6 +51,21 @@ class TestRewardDistribution(unittest.TestCase):
 
     def setUp(self):
         self._substrate = SubstrateInterface(url=WS_URL)
+
+    # [TODO] Duplicated
+    def get_daily_block_reward(self):
+        block_reward = self._substrate.query(
+            module='BlockReward',
+            storage_function='DailyBlockReward',
+        )
+        block_reward = int(str(block_reward['avg']))
+        config = self._substrate.query(
+            module='BlockReward',
+            storage_function='RewardDistributionConfigStorage',
+        )
+        config = config.value
+        collator_percent = config['collators_percent'] / sum(config.values())
+        return block_reward * collator_percent
 
     def get_block_issue_reward(self):
         block_reward = self._substrate.query(
@@ -143,6 +158,32 @@ class TestRewardDistribution(unittest.TestCase):
             rewards_wo_tip, FEE_MAX_LIMIT,
             f'The transaction fee w/o tip is out of limit: {rewards_wo_tip} < {FEE_MAX_LIMIT}')
 
+    # [TODO] Duplicated
+    def claim_collator_reward(self, kp):
+        batch = ExtrinsicBatch(self._substrate, kp)
+        batch.compose_call(
+            'ParachainStaking',
+            'increment_collator_rewards',
+            {}
+        )
+
+        batch.compose_call(
+            'ParachainStaking',
+            'claim_rewards',
+            {}
+        )
+        return batch.execute()
+
+    def _claim_and_check_block_reward(self, kp_src, block_reward):
+        bl_hash = self.claim_collator_reward(kp_src)
+        collator_0_reward = self.get_parachain_reward(bl_hash)
+        collator_0_end = get_block_height(self._substrate, bl_hash)
+        collator_avg_reward = collator_0_reward / (collator_0_end - 0)
+        self.assertAlmostEqual(
+            (collator_avg_reward) / block_reward,
+            1, 7,
+            f'The block reward is not correct {collator_avg_reward} v.s. {block_reward}')
+
     def _check_block_reward_in_event(self, kp_src, block_reward):
         for i in range(0, WAIT_BLOCK_NUMBER):
             block_info = self._substrate.get_block_header()
@@ -159,7 +200,7 @@ class TestRewardDistribution(unittest.TestCase):
             if len(self._substrate.get_block(prev_hash)['extrinsics']) != 3:
                 time.sleep(WAIT_ONLY_ONE_BLOCK_PERIOD)
                 continue
-            event = self._get_event(now_hash, 'Balances', 'Transfer')
+            event = get_event(self._substrate, now_hash, 'Balances', 'Transfer')
             if event is None or str(event[1][1]['to']) != kp_src.ss58_address:
                 print(f'The event is {event}, or the receiver is not {kp_src.ss58_address}')
                 time.sleep(WAIT_ONLY_ONE_BLOCK_PERIOD)
@@ -186,11 +227,7 @@ class TestRewardDistribution(unittest.TestCase):
         # Check
         block_reward = self.get_block_issue_reward()
         self.assertNotEqual(block_reward, 0, 'block reward should not be zero')
-
-        time.sleep(WAIT_ONLY_ONE_BLOCK_PERIOD)
-
-        self.assertTrue(
-            self._check_block_reward_in_event(KP_COLLATOR, block_reward), 'Did not find the block reward event')
+        self._claim_and_check_block_reward(KP_COLLATOR, block_reward)
 
     def test_transaction_fee_reward_v1(self):
         kp_bob = self._kp_bob

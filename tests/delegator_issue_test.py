@@ -1,10 +1,9 @@
 import unittest
-import time
 
 from substrateinterface import SubstrateInterface, Keypair
-from tools.utils import WS_URL, get_chain, get_collators, get_block_height, get_account_balance, get_block_hash
+from tools.utils import WS_URL, get_chain, get_collators, get_block_height
 from tools.utils import KP_GLOBAL_SUDO, exist_pallet, KP_COLLATOR
-from tools.payload import sudo_call_compose, sudo_extrinsic_send, user_extrinsic_send
+from tools.payload import user_extrinsic_send
 from tools.utils import ExtrinsicBatch, get_event
 from tools.runtime_upgrade import wait_until_block_height
 from tests.utils_func import restart_parachain_and_runtime_upgrade
@@ -30,43 +29,6 @@ def collator_stake_more(substrate, kp_collator, stake_number):
         call_params={
             'more': stake_number,
         })
-
-
-@sudo_extrinsic_send(sudo_keypair=KP_GLOBAL_SUDO)
-@sudo_call_compose(sudo_keypair=KP_GLOBAL_SUDO)
-def set_coefficient(substrate, coefficient):
-    return substrate.compose_call(
-        call_module='StakingCoefficientRewardCalculator',
-        call_function='set_coefficient',
-        call_params={
-            'coefficient': coefficient,
-        }
-    )
-
-
-@sudo_extrinsic_send(sudo_keypair=KP_GLOBAL_SUDO)
-@sudo_call_compose(sudo_keypair=KP_GLOBAL_SUDO)
-def set_max_candidate_stake(substrate, stake):
-    return substrate.compose_call(
-        call_module='ParachainStaking',
-        call_function='set_max_candidate_stake',
-        call_params={
-            'new': stake,
-        }
-    )
-
-
-@sudo_extrinsic_send(sudo_keypair=KP_GLOBAL_SUDO)
-@sudo_call_compose(sudo_keypair=KP_GLOBAL_SUDO)
-def set_reward_rate(substrate, collator, delegator):
-    return substrate.compose_call(
-        call_module='StakingFixedRewardCalculator',
-        call_function='set_reward_rate',
-        call_params={
-            'collator_rate': collator,
-            'delegator_rate': delegator,
-        }
-    )
 
 
 class TestDelegator(unittest.TestCase):
@@ -98,21 +60,12 @@ class TestDelegator(unittest.TestCase):
         collator_percent = config['collators_percent'] / sum(config.values())
         return block_reward * collator_percent
 
+    # [TODO] Duplicated
     def get_parachain_reward(self, block_hash):
         event = get_event(self.substrate, block_hash, 'ParachainStaking', 'Rewarded')
         if not event:
             return None
         return int(str(event[1][1][1]))
-
-    def get_balance_difference(self, addr):
-        current_height = get_block_height(self.substrate)
-        current_block_hash = get_block_hash(self.substrate, current_height)
-        now_balance = get_account_balance(self.substrate, addr, current_block_hash)
-
-        previous_height = current_height - 1
-        previous_block_hash = get_block_hash(self.substrate, previous_height)
-        pre_balance = get_account_balance(self.substrate, addr, previous_block_hash)
-        return now_balance - pre_balance
 
     def get_one_collator_without_delegator(self, keys):
         for key in keys:
@@ -150,19 +103,6 @@ class TestDelegator(unittest.TestCase):
             {}
         )
         return batch.execute()
-
-    def wait_get_reward(self, addr):
-        time.sleep(12 * 2)
-        count_down = 0
-        wait_time = 120
-        prev_balance = get_account_balance(self.substrate, addr)
-        while count_down < wait_time:
-            if prev_balance != get_account_balance(self.substrate, addr):
-                return True
-            print(f'already wait about {count_down} seconds')
-            count_down += 12
-            time.sleep(12)
-        return False
 
     def batch_fund(self, batch, kp, amount):
         batch.compose_sudo_call('Balances', 'force_set_balance', {
