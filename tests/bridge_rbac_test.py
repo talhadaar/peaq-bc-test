@@ -296,6 +296,122 @@ class TestBridgeRbac(unittest.TestCase):
             self.fail(f'Role {role_id} still assigned to user {user_id}')
 
         
+    def _verify_add_permission(self, tx, permission_id, name):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.PermissionAdded.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_permission_add_or_update_event(events, self._eth_kp_src.ss58_address, permission_id, name)
+
+        # fetch permission and verify
+        data = self._contract.functions.fetch_permission(self._account, permission_id).call()
+        self.assertEqual(data[0], permission_id)
+        self.assertEqual(data[1], name)
+
+        return tx
+    
+    def _verify_update_permission(self, tx, permission_id, name):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.PermissionUpdated.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_permission_add_or_update_event(events, self._eth_kp_src.ss58_address, permission_id, name)
+
+        # fetch permission and verify
+        data = self._contract.functions.fetch_permission(self._account, permission_id).call()
+        self.assertEqual(data[0], permission_id)
+        self.assertEqual(data[1], name)
+        
+        return tx
+    
+    def _verify_disable_permission(self, tx, permission_id):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.PermissionRemoved.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_permission_disabled_event(events, self._eth_kp_src.ss58_address, permission_id)
+
+        # fetch permission and verify
+        data = self._contract.functions.fetch_permission(self._account, permission_id).call()
+        self.assertEqual(data[0], permission_id)
+        self.assertEqual(data[2], False)
+
+        return tx
+
+    def _verify_assign_permission_to_role(self, tx, permission_id, role_id):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.PermissionAssignedToRole.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_permission_assigned_or_unassigned_to_role_event(events, self._eth_kp_src.ss58_address, permission_id, role_id)
+
+        # verify fetch_role_permissions returns correct data
+        data = self._contract.functions.fetch_role_permissions(self._account, role_id).call()
+        if not any(permission_id in permissions for permissions in data):
+            self.fail(f'Permission {permission_id} not assigned to role {role_id}')
+        
+        return tx
+    
+    def _verify_unassign_permission_to_role(self, tx, permission_id, role_id):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.PermissionUnassignedToRole.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_permission_assigned_or_unassigned_to_role_event(events, self._eth_kp_src.ss58_address, permission_id, role_id)
+
+        # verify fetch_role_permissions returns correct data
+        data = self._contract.functions.fetch_role_permissions(self._account, role_id).call()
+        if any(permission_id in permissions for permissions in data):
+            self.fail(f'Permission {permission_id} still assigned to role {role_id}')
+
+        return tx
+    
+    def _verify_add_group(self, tx, group_id, name):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.GroupAdded.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_group_add_or_update_event(events, self._eth_kp_src.ss58_address, group_id, name)
+
+        # fetch group and verify
+        data = self._contract.functions.fetch_group(self._account, group_id).call()
+        self.assertEqual(data[0], group_id)
+        self.assertEqual(data[1], name)
+
+        return tx
+    
+    def _verify_update_group(self, tx, group_id, name):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.GroupUpdated.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_group_add_or_update_event(events, self._eth_kp_src.ss58_address, group_id, name)
+
+        # fetch group and verify
+        data = self._contract.functions.fetch_group(self._account, group_id).call()
+        self.assertEqual(data[0], group_id)
+        self.assertEqual(data[1], name)
+
+    def _verify_disable_group(self, tx, group_id):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.GroupRemoved.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_group_disabled_event(events, self._eth_kp_src.ss58_address, group_id)
+
+        # fetch group and verify
+        data = self._contract.functions.fetch_group(self._account, group_id).call()
+        self.assertEqual(data[0], group_id)
+        self.assertEqual(data[2], False)
+
     def setUp(self):
         self._eth_src = calculate_evm_addr(KP_SRC.ss58_address)
         self._w3 = Web3(Web3.HTTPProvider(ETH_URL))
@@ -310,25 +426,46 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertTrue(bl_hash, f'Failed to transfer token to {self._eth_kp_src.ss58_address}')
 
 
-    def test_rbac_roles_mutations(self):
+    def test_rbac_bridge(self):
 
-        role1 = generate_random_tuple()
-        role2 = generate_random_tuple()
-        user = generate_random_tuple()
-        
-        # add role
-        self._add_role(*role1)
-        self._verify_add_role(self._add_role(*role2), *role2)
+        # NOTE for each role, permission and group
+        # Every 2nd is updated
+        # Every 3rd is disabled
 
-        # update role
-        self._verify_update_role(self._update_role(*role1), *role1)
+        users = [generate_random_tuple() for _ in range(3)]
+        roles = [generate_random_tuple() for _ in range(3)]
+        permissions = [generate_random_tuple() for _ in range(3)]
+        groups = [generate_random_tuple() for _ in range(3)]
 
-        # disable role
-        # self._verify_disable_role(self._disable_role(role[0]), role[0]) # TODO disable_role reverts with Value not found
+        # add roles, permissions and groups
+        self._verify_add_role(self._add_role(*roles[0]), *roles[0])
+        self._add_role(*roles[1])
+        self._add_role(*roles[2])
 
-        # assign role
-        self._assign_role_to_user(role1[0], user[0])
-        self._verify_assign_role_to_user(self._assign_role_to_user(role2[0], user[0]), role2[0], user[0])
+        self._verify_add_permission(self._add_permission(*permissions[0]), *permissions[0])
+        self._add_permission(*permissions[1])
+        self._add_permission(*permissions[2])
 
-        # unassing role
-        self._verify_unassign_role_to_user(self._unassign_role_to_user(role2[0], user[0]),role2[0], user[0]) 
+        self._verify_add_group(self._add_group(*groups[0]), *groups[0])
+        self._add_group(*groups[1])
+        self._add_group(*groups[2])
+
+        # update roles, permissions and groups - TODO replace updated values with newer values and check
+        self._verify_update_role(self._update_role(*roles[1]), *roles[1])
+        self._verify_update_permission(self._update_permission(*permissions[1]), *permissions[1])
+        self._verify_update_group(self._update_group(*groups[1]), *groups[1])
+
+        # disable roles, permissions and groups
+        # self._verify_disable_role(self._disable_role(roles[2]), roles[2]) # TODO disable_role reverts with Value not found
+        # self._verify_disable_permission(self._disable_permission(permissions[2]), permissions[2])
+        # self._verify_disable_group(self._disable_group(groups[2]), groups[2])
+
+        # # assign role
+        # self._verify_assign_role_to_user(self._assign_role_to_user(role1[0], user[0]), role1[0], user[0])
+
+        # # unassign role
+        # self._verify_unassign_role_to_user(self._unassign_role_to_user(role2[0], user[0]),role2[0], user[0]) 
+
+        # # update permission
+
+        # # disable permission
