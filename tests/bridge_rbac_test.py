@@ -25,30 +25,15 @@ ABI_FILE = 'ETH/rbac/rbac.sol.json'
 TOKEN_NUM = 10000 * pow(10, 15)
 
 
-# generates list of `length` random utf-8 encoded hex strings of length 15
-def generate_random_hex_list(strlen, listlen):
-    return [generate_random_hex(strlen).encode("utf-8") for i in range(listlen)]
+def generate_random_id():
+    return generate_random_hex(15).encode("utf-8")
 
 
-# returns list of utf-8 encoded hex strings from a list of strings
-def str_to_utf8_encoded_list(strlist):
-    return list(map(lambda name: name.encode("utf-8"), strlist))
-
-
-##############################################################################
-# Constants for global test-setup defaults
-##############################################################################
-
-USER_IDS = generate_random_hex_list(15, 3)
-
-PERMISSION_IDS = generate_random_hex_list(15, 3)
-PERMISSION_ID_NAMES = str_to_utf8_encoded_list(["PERMISSION1", "PERMISSION2", "PERMISSION3"])
-
-ROLE_IDS = generate_random_hex_list(15, 3)
-ROLE_ID_NAMES = str_to_utf8_encoded_list(["ROLE1", "ROLE2", "ROLE3"])
-
-GROUP_IDS = generate_random_hex_list(15, 3)
-GROUP_ID_NAMES = str_to_utf8_encoded_list(["GROUP1", "GROUP2", "GROUP3"])
+# generates a tuple of (id, name) for a role, permission, or group
+def generate_random_tuple():
+    id = generate_random_id()
+    name = f'NAME{id[:4]}'.encode("utf-8")
+    return (id, name)
 
 
 ##############################################################################
@@ -71,7 +56,7 @@ def _sign_and_submit_transaction(tx, w3, signer):
     tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
     return w3.eth.wait_for_transaction_receipt(tx_hash)
 
-
+# NOTE: fetch_user_roles will return an error if the user has no roles
 class TestBridgeRbac(unittest.TestCase):
 
     ##############################################################################
@@ -237,8 +222,7 @@ class TestBridgeRbac(unittest.TestCase):
     # Functions that verify mutations
     ##############################################################################
     
-    def _verify_add_role(self, role_id, name):
-        tx = self._add_role(role_id, name)
+    def _verify_add_role(self, tx, role_id, name):
         self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
 
         # get block events and verify
@@ -253,8 +237,7 @@ class TestBridgeRbac(unittest.TestCase):
 
         return tx
     
-    def _verify_update_role(self, role_id, name):
-        tx = self._update_role(role_id, name)
+    def _verify_update_role(self, tx, role_id, name):
         self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
 
         # get block events and verify
@@ -269,8 +252,7 @@ class TestBridgeRbac(unittest.TestCase):
 
         return tx
     
-    def _verify_disable_role(self, role_id):
-        tx = self._disable_role(role_id)
+    def _verify_disable_role(self, tx, role_id):
         self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
 
         # get block events and verify
@@ -285,8 +267,7 @@ class TestBridgeRbac(unittest.TestCase):
 
         return tx
 
-    def _verify_assign_role_to_user(self, role_id, user_id):
-        tx = self._assign_role_to_user(role_id, user_id)
+    def _verify_assign_role_to_user(self, tx, role_id, user_id):
         self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
 
         # get block events and verify
@@ -294,14 +275,14 @@ class TestBridgeRbac(unittest.TestCase):
         events = self._contract.events.RoleAssignedToUser.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
         self._verify_role_assign_or_unassign_event(events, self._eth_kp_src.ss58_address, role_id, user_id)
 
-        # fetch role and verify
+        # verify fetch_user_roles returns correct data
         data = self._contract.functions.fetch_user_roles(self._account, user_id).call()
-        # TODO verify fetch_user_roles returns correct data
+        if not any(role_id in roles for roles in data):
+            self.fail(f'Role {role_id} not assigned to user {user_id}')
 
         return tx
 
-    def _verify_unassign_role_to_user(self, role_id, user_id):
-        tx = self._unassign_role_to_user(role_id, user_id)
+    def _verify_unassign_role_to_user(self, tx, role_id, user_id):
         self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
 
         # get block events and verify
@@ -309,9 +290,10 @@ class TestBridgeRbac(unittest.TestCase):
         events = self._contract.events.RoleUnassignedToUser.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
         self._verify_role_assign_or_unassign_event(events, self._eth_kp_src.ss58_address, role_id, user_id)
 
-        # fetch role and verify
+        # verify fetch_user_roles returns correct data
         data = self._contract.functions.fetch_user_roles(self._account, user_id).call()
-        # TODO verify fetch_user_roles returns correct data
+        if any(role_id in roles for roles in data):
+            self.fail(f'Role {role_id} still assigned to user {user_id}')
 
         
     def setUp(self):
@@ -321,35 +303,32 @@ class TestBridgeRbac(unittest.TestCase):
         self._eth_kp_src = Keypair.create_from_private_key(ETH_PRIVATE_KEY, crypto_type=KeypairType.ECDSA)
         self._account = calculate_evm_account_hex(self._eth_kp_src.ss58_address)
         self._contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
-
-    # NOTE: fetch_user_roles will return an error if the user has no roles
-    def test_rbac_bridge(self):
-        #   |u0|u1|u2|r0|r1|r2|g0|g1|g2|
-        # -----------------------------|
-        # u0|  |  |  |xx|  |  |xx|  |  |
-        # u1|  |  |  |  |xx|  |  |xx|  |
-        # u2|  |  |  |  |  |  |  |  |  |
-        # r0|  |  |  |  |  |  |xx|  |  |
-        # r1|  |  |  |  |  |  |  |xx|  |
-        # r2|  |  |  |  |  |  |  |  |  |
-        # g0|  |  |  |  |  |  |  |  |  |
-        # g1|  |  |  |  |  |  |  |  |  |
-        # g2|  |  |  |  |  |  |  |  |  |
-        # p0|  |  |  |xx|  |  |xx|  |  |
-        # p1|  |  |  |  |xx|  |  |xx|  |
-        # p2|  |  |  |  |  |  |  |  |  |
-
         # Setup eth_ko_src with some tokens
         transfer(self._substrate, KP_SRC, calculate_evm_account(self._eth_src), TOKEN_NUM)
         bl_hash = call_eth_transfer_a_lot(self._substrate, KP_SRC, self._eth_src, self._eth_kp_src.ss58_address.lower())
-
         # verify tokens have been transferred
         self.assertTrue(bl_hash, f'Failed to transfer token to {self._eth_kp_src.ss58_address}')
 
-        self._verify_add_role(ROLE_IDS[0], ROLE_ID_NAMES[0])
-        self._verify_add_role(ROLE_IDS[1], ROLE_ID_NAMES[1])
-        self._verify_update_role(ROLE_IDS[0], ROLE_ID_NAMES[2])
-        # self._verify_disable_role(ROLE_IDS[0])
-        self._verify_assign_role_to_user(ROLE_IDS[0], USER_IDS[0])
-        self._verify_assign_role_to_user(ROLE_IDS[1], USER_IDS[0])
-        self._verify_unassign_role_to_user(ROLE_IDS[0], USER_IDS[0])
+
+    def test_rbac_roles_mutations(self):
+
+        role1 = generate_random_tuple()
+        role2 = generate_random_tuple()
+        user = generate_random_tuple()
+        
+        # add role
+        self._add_role(*role1)
+        self._verify_add_role(self._add_role(*role2), *role2)
+
+        # update role
+        self._verify_update_role(self._update_role(*role1), *role1)
+
+        # disable role
+        # self._verify_disable_role(self._disable_role(role[0]), role[0]) # TODO disable_role reverts with Value not found
+
+        # assign role
+        self._assign_role_to_user(role1[0], user[0])
+        self._verify_assign_role_to_user(self._assign_role_to_user(role2[0], user[0]), role2[0], user[0])
+
+        # unassing role
+        self._verify_unassign_role_to_user(self._unassign_role_to_user(role2[0], user[0]),role2[0], user[0]) 
