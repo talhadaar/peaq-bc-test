@@ -78,12 +78,6 @@ class TestDelegator(unittest.TestCase):
         batch = ExtrinsicBatch(self.substrate, kp)
         batch.compose_call(
             'ParachainStaking',
-            'increment_delegator_rewards',
-            {}
-        )
-
-        batch.compose_call(
-            'ParachainStaking',
             'claim_rewards',
             {}
         )
@@ -91,12 +85,6 @@ class TestDelegator(unittest.TestCase):
 
     def claim_collator_reward(self, kp):
         batch = ExtrinsicBatch(self.substrate, kp)
-        batch.compose_call(
-            'ParachainStaking',
-            'increment_collator_rewards',
-            {}
-        )
-
         batch.compose_call(
             'ParachainStaking',
             'claim_rewards',
