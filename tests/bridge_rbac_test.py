@@ -487,33 +487,33 @@ class TestBridgeRbac(unittest.TestCase):
         # self._verify_disable_group(self._disable_group(groups[2]), groups[2])
 
         # assign role to user
-        self._verify_assign_role_to_user(self._assign_role_to_user(roles[0], users[0]), roles[0], users[0])
-        self._assign_role_to_user(roles[1], users[0])
-        self._assign_role_to_user(roles[2], users[0])
+        self._verify_assign_role_to_user(self._assign_role_to_user(roles[0][0], users[0][0]), roles[0][0], users[0][0])
+        self._assign_role_to_user(roles[1][0], users[0][0])
+        self._assign_role_to_user(roles[2][0], users[0][0])
 
         # unassign role to user
-        self._verify_unassign_role_to_user(self._unassign_role_to_user(roles[0], users[0]),roles[0], users[0]) 
+        self._verify_unassign_role_to_user(self._unassign_role_to_user(roles[0][0], users[0][0]),roles[0][0], users[0][0]) 
 
         # assign permission to role
-        self._verify_assign_permission_to_role(self._assign_permission_to_role(permissions[0], roles[0]), permissions[0], roles[0])
-        self._assign_permission_to_role(permissions[1], roles[0])
-        self._assign_permission_to_role(permissions[2], roles[0])
+        self._verify_assign_permission_to_role(self._assign_permission_to_role(permissions[0][0], roles[0][0]), permissions[0][0], roles[0][0])
+        self._assign_permission_to_role(permissions[1][0], roles[0][0])
+        self._assign_permission_to_role(permissions[2][0], roles[0][0])
 
         # unassign permission to role
-        self._verify_unassign_permission_to_role(self._unassign_permission_to_role(permissions[0], roles[0]), permissions[0], roles[0])
+        self._verify_unassign_permission_to_role(self._unassign_permission_to_role(permissions[0][0], roles[0][0]), permissions[0][0], roles[0][0])
 
         # assign role to group
-        self._verify_assign_role_to_group(self._assign_role_to_group(roles[0], groups[0]), roles[0], groups[0])
-        self._assign_role_to_group(roles[1], groups[0])
-        self._assign_role_to_group(roles[2], groups[0])
+        self._verify_assign_role_to_group(self._assign_role_to_group(roles[0][0], groups[0][0]), roles[0][0], groups[0][0])
+        self._assign_role_to_group(roles[1][0], groups[0][0])
+        self._assign_role_to_group(roles[2][0], groups[0][0])[0]
 
         # unassign role to group
-        self._verify_unassign_role_to_group(self._unassign_role_to_group(roles[0], groups[0]), roles[0], groups[0])
+        self._verify_unassign_role_to_group(self._unassign_role_to_group(roles[0][0], groups[0][0]), roles[0][0], groups[0][0])
 
         # assign user to group
-        self._verify_assign_user_to_group(self._assign_user_to_group(users[0], groups[0]), users[0], groups[0])
-        self._assign_user_to_group(users[1], groups[0])
-        self._assign_user_to_group(users[2], groups[0])
+        self._verify_assign_user_to_group(self._assign_user_to_group(users[0][0], groups[0][0]), users[0][0], groups[0][0])
+        self._assign_user_to_group(users[1][0], groups[0][0])
+        self._assign_user_to_group(users[2][0], groups[0][0])
 
         # unassign user to group
-        self._verify_unassign_user_to_group(self._unassign_user_to_group(users[0], groups[0]), users[0], groups[0])
+        self._verify_unassign_user_to_group(self._unassign_user_to_group(users[0][0], groups[0][0]), users[0][0], groups[0][0])
