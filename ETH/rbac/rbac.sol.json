@@ -403,7 +403,7 @@
 				"type": "bytes32"
 			}
 		],
-		"name": "UserUnassignedToGroup",
+		"name": "UserUnAssignedToGroup",
 		"type": "event"
 	},
 	{

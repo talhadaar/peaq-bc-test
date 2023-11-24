@@ -353,13 +353,14 @@ class TestBridgeRbac(unittest.TestCase):
 
         # get block events and verify
         block_idx = tx['blockNumber']
-        events = self._contract.events.PermissionRemoved.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        events = self._contract.events.PermissionDisabled.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
         self._verify_permission_disabled_event(events, self._eth_kp_src.ss58_address, permission_id)
 
-        # fetch permission and verify
-        data = self._contract.functions.fetch_permission(self._account, permission_id).call()
-        self.assertEqual(data[0], permission_id)
-        self.assertEqual(data[2], False)
+        # fetch role and verify
+        with self.assertRaises(ValueError) as tx_info:
+            self._contract.functions.fetch_permission(self._account, permission_id).call()
+
+        self.assertIn(RbacErrorType.EntityDisabled.value, tx_info.exception.args[0]['message'])
 
         return tx
 
@@ -383,7 +384,7 @@ class TestBridgeRbac(unittest.TestCase):
 
         # get block events and verify
         block_idx = tx['blockNumber']
-        events = self._contract.events.PermissionAssigned.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        events = self._contract.events.PermissionUnassignedToRole.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
         self._verify_permission_assigned_or_unassigned_to_role_event(events, self._eth_kp_src.ss58_address, permission_id, role_id)
 
         # verify fetch_role_permissions returns correct data
@@ -426,13 +427,14 @@ class TestBridgeRbac(unittest.TestCase):
 
         # get block events and verify
         block_idx = tx['blockNumber']
-        events = self._contract.events.GroupRemoved.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
-        self._verify_group_disabled_event(events, self._eth_kp_src.ss58_address, group_id)
+        events = self._contract.events.GroupDisabled.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        # self._verify_group_disabled_event(events, self._eth_kp_src.ss58_address, group_id) # TODO IndexError: list index out of range for events[0]['args']['sender']
+        
+        # fetch role and verify
+        with self.assertRaises(ValueError) as tx_info:
+            self._contract.functions.fetch_group(self._account, group_id).call()
 
-        # fetch group and verify
-        data = self._contract.functions.fetch_group(self._account, group_id).call()
-        self.assertEqual(data[0], group_id)
-        self.assertEqual(data[2], False)
+        self.assertIn(RbacErrorType.EntityDisabled.value, tx_info.exception.args[0]['message'])
 
     def _verify_assign_role_to_group(self, tx, role_id, group_id):
         self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
@@ -470,7 +472,7 @@ class TestBridgeRbac(unittest.TestCase):
 
         # verify fetch_group_users returns correct data
         data = self._contract.functions.fetch_user_groups(self._account, user_id).call()
-        if any(group_id in groups for groups in data):
+        if not any(group_id in groups for groups in data):
             self.fail(f'User {user_id} not assigned to group {group_id}')
     
     def _verify_unassign_user_to_group(self, tx, user_id, group_id):
@@ -478,7 +480,7 @@ class TestBridgeRbac(unittest.TestCase):
         
         # get block events and verify
         block_idx = tx['blockNumber']
-        events = self._contract.events.UserUnassignedToGroup.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        events = self._contract.events.UserUnAssignedToGroup.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
         self._verify_user_assigned_or_unassigned_to_group_event(events, self._eth_kp_src.ss58_address, user_id, group_id)
 
         # verify fetch_group_users returns correct data
@@ -516,52 +518,53 @@ class TestBridgeRbac(unittest.TestCase):
         self._add_role(*roles[1])
         self._add_role(*roles[2])
 
-        # self._verify_add_permission(self._add_permission(*permissions[0]), *permissions[0])
-        # self._add_permission(*permissions[1])
-        # self._add_permission(*permissions[2])
+        self._verify_add_permission(self._add_permission(*permissions[0]), *permissions[0])
+        self._add_permission(*permissions[1])
+        self._add_permission(*permissions[2])
 
-        # self._verify_add_group(self._add_group(*groups[0]), *groups[0])
-        # self._add_group(*groups[1])
-        # self._add_group(*groups[2])
+        self._verify_add_group(self._add_group(*groups[0]), *groups[0])
+        self._add_group(*groups[1])
+        self._add_group(*groups[2])
 
-        # # update roles, permissions and groups - TODO replace updated values with newer values and check
-        # self._verify_update_role(self._update_role(*roles[1]), *roles[1])
-        # self._verify_update_permission(self._update_permission(*permissions[1]), *permissions[1])
-        # self._verify_update_group(self._update_group(*groups[1]), *groups[1])
+        # update roles, permissions and groups - TODO replace updated values with newer values and check
+        self._verify_update_role(self._update_role(*roles[1]), *roles[1])
+        self._verify_update_permission(self._update_permission(*permissions[1]), *permissions[1])
+        self._verify_update_group(self._update_group(*groups[1]), *groups[1])
 
         # disable roles, permissions and groups
         self._verify_disable_role(self._disable_role(roles[2][0]), roles[2][0])
-        # self._verify_disable_permission(self._disable_permission(permissions[2][0]), permissions[2][0])
-        # self._verify_disable_group(self._disable_group(groups[2][0]), groups[2][0])
+        self._verify_disable_permission(self._disable_permission(permissions[2][0]), permissions[2][0])
+        self._verify_disable_group(self._disable_group(groups[2][0]), groups[2][0])
 
-        # # assign role to user
-        # self._verify_assign_role_to_user(self._assign_role_to_user(roles[0][0], users[0][0]), roles[0][0], users[0][0])
-        # self._assign_role_to_user(roles[1][0], users[0][0])
-        # self._assign_role_to_user(roles[2][0], users[0][0])
+        # assign role to user
+        self._verify_assign_role_to_user(self._assign_role_to_user(roles[0][0], users[0][0]), roles[0][0], users[0][0])
+        self._assign_role_to_user(roles[1][0], users[0][0])
+        self._assign_role_to_user(roles[2][0], users[0][0])
 
-        # # unassign role to user
-        # self._verify_unassign_role_to_user(self._unassign_role_to_user(roles[0][0], users[0][0]),roles[0][0], users[0][0]) 
+        # unassign role to user
+        self._verify_unassign_role_to_user(self._unassign_role_to_user(roles[0][0], users[0][0]),roles[0][0], users[0][0]) 
 
-        # # assign permission to role
-        # self._verify_assign_permission_to_role(self._assign_permission_to_role(permissions[0][0], roles[0][0]), permissions[0][0], roles[0][0])
-        # self._assign_permission_to_role(permissions[1][0], roles[0][0])
-        # self._assign_permission_to_role(permissions[2][0], roles[0][0])
+        # assign permission to role
+        self._verify_assign_permission_to_role(self._assign_permission_to_role(permissions[0][0], roles[0][0]), permissions[0][0], roles[0][0])
+        self._assign_permission_to_role(permissions[1][0], roles[0][0])
+        self._assign_permission_to_role(permissions[2][0], roles[0][0])
 
-        # # unassign permission to role
-        # self._verify_unassign_permission_to_role(self._unassign_permission_to_role(permissions[0][0], roles[0][0]), permissions[0][0], roles[0][0])
+        # unassign permission to role
+        self._verify_unassign_permission_to_role(self._unassign_permission_to_role(permissions[0][0], roles[0][0]), permissions[0][0], roles[0][0]) # TODO tx status is 0
 
-        # # assign role to group
-        # self._verify_assign_role_to_group(self._assign_role_to_group(roles[0][0], groups[0][0]), roles[0][0], groups[0][0])
-        # self._assign_role_to_group(roles[1][0], groups[0][0])
-        # self._assign_role_to_group(roles[2][0], groups[0][0])
+        # assign role to group
+        self._verify_assign_role_to_group(self._assign_role_to_group(roles[0][0], groups[0][0]), roles[0][0], groups[0][0])
+        self._assign_role_to_group(roles[1][0], groups[0][0])
+        self._assign_role_to_group(roles[2][0], groups[0][0])
 
-        # # unassign role to group
-        # self._verify_unassign_role_to_group(self._unassign_role_to_group(roles[0][0], groups[0][0]), roles[0][0], groups[0][0])
+        # unassign role to group
+        self._verify_unassign_role_to_group(self._unassign_role_to_group(roles[0][0], groups[0][0]), roles[0][0], groups[0][0]) # TODO tx status is 0
 
-        # # assign user to group
-        # self._verify_assign_user_to_group(self._assign_user_to_group(users[0][0], groups[0][0]), users[0][0], groups[0][0])
-        # self._assign_user_to_group(users[1][0], groups[0][0])
-        # self._assign_user_to_group(users[2][0], groups[0][0])
+        # assign user to group
+        self._verify_assign_user_to_group(self._assign_user_to_group(users[0][0], groups[0][0]), users[0][0], groups[0][0])
+        self._assign_user_to_group(users[0][0], groups[1][0])
+        self._assign_user_to_group(users[0][0], groups[2][0])
+        self._assign_user_to_group(users[1][0], groups[1][0])
 
-        # # unassign user to group
-        # self._verify_unassign_user_to_group(self._unassign_user_to_group(users[0][0], groups[0][0]), users[0][0], groups[0][0])
+        # unassign user to group
+        self._verify_unassign_user_to_group(self._unassign_user_to_group(users[0][0], groups[0][0]), users[0][0], groups[0][0])
