@@ -346,7 +346,7 @@ class TestBridgeRbac(unittest.TestCase):
 
         # get block events and verify
         block_idx = tx['blockNumber']
-        events = self._contract.events.PermissionAssignedToRole.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        events = self._contract.events.PermissionAssigned.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
         self._verify_permission_assigned_or_unassigned_to_role_event(events, self._eth_kp_src.ss58_address, permission_id, role_id)
 
         # verify fetch_role_permissions returns correct data
@@ -361,7 +361,7 @@ class TestBridgeRbac(unittest.TestCase):
 
         # get block events and verify
         block_idx = tx['blockNumber']
-        events = self._contract.events.PermissionUnassignedToRole.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        events = self._contract.events.PermissionAssigned.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
         self._verify_permission_assigned_or_unassigned_to_role_event(events, self._eth_kp_src.ss58_address, permission_id, role_id)
 
         # verify fetch_role_permissions returns correct data
@@ -411,6 +411,32 @@ class TestBridgeRbac(unittest.TestCase):
         data = self._contract.functions.fetch_group(self._account, group_id).call()
         self.assertEqual(data[0], group_id)
         self.assertEqual(data[2], False)
+
+    def _verify_assign_role_to_group(self, tx, role_id, group_id):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.RoleAssignedToGroup.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_role_assigned_or_unassigned_to_group_event(events, self._eth_kp_src.ss58_address, role_id, group_id)
+
+        # verify fetch_group_roles returns correct data
+        data = self._contract.functions.fetch_group_roles(self._account, group_id).call()
+        if not any(role_id in roles for roles in data):
+            self.fail(f'Role {role_id} not assigned to group {group_id}')
+
+    def _verify_unassign_role_to_group(self, tx, role_id, group_id):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.RoleUnassignedToGroup.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_role_assigned_or_unassigned_to_group_event(events, self._eth_kp_src.ss58_address, role_id, group_id)
+
+        # verify fetch_group_roles returns correct data
+        data = self._contract.functions.fetch_group_roles(self._account, group_id).call()
+        if any(role_id in roles for roles in data):
+            self.fail(f'Role {role_id} still assigned to group {group_id}')
 
     def _verify_assign_user_to_group(self, tx, user_id, group_id):
         self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
@@ -505,7 +531,7 @@ class TestBridgeRbac(unittest.TestCase):
         # assign role to group
         self._verify_assign_role_to_group(self._assign_role_to_group(roles[0][0], groups[0][0]), roles[0][0], groups[0][0])
         self._assign_role_to_group(roles[1][0], groups[0][0])
-        self._assign_role_to_group(roles[2][0], groups[0][0])[0]
+        self._assign_role_to_group(roles[2][0], groups[0][0])
 
         # unassign role to group
         self._verify_unassign_role_to_group(self._unassign_role_to_group(roles[0][0], groups[0][0]), roles[0][0], groups[0][0])
