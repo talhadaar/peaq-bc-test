@@ -464,6 +464,13 @@ class TestBridgeRbac(unittest.TestCase):
         if any(group_id in groups for groups in data):
             self.fail(f'User {user_id} still assigned to group {group_id}')
 
+    def fund_account(self):
+        # Setup eth_ko_src with some tokens
+        transfer(self._substrate, KP_SRC, calculate_evm_account(self._eth_src), TOKEN_NUM)
+        bl_hash = call_eth_transfer_a_lot(self._substrate, KP_SRC, self._eth_src, self._eth_kp_src.ss58_address.lower())
+        # verify tokens have been transferred
+        self.assertTrue(bl_hash, f'Failed to transfer token to {self._eth_kp_src.ss58_address}')
+
     def setUp(self):
         self._eth_src = calculate_evm_addr(KP_SRC.ss58_address)
         self._w3 = Web3(Web3.HTTPProvider(ETH_URL))
@@ -471,23 +478,16 @@ class TestBridgeRbac(unittest.TestCase):
         self._eth_kp_src = Keypair.create_from_private_key(ETH_PRIVATE_KEY, crypto_type=KeypairType.ECDSA)
         self._account = calculate_evm_account_hex(self._eth_kp_src.ss58_address)
         self._contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
-        # Setup eth_ko_src with some tokens
-        transfer(self._substrate, KP_SRC, calculate_evm_account(self._eth_src), TOKEN_NUM)
-        bl_hash = call_eth_transfer_a_lot(self._substrate, KP_SRC, self._eth_src, self._eth_kp_src.ss58_address.lower())
-        # verify tokens have been transferred
-        self.assertTrue(bl_hash, f'Failed to transfer token to {self._eth_kp_src.ss58_address}')
-
 
     def test_rbac_bridge(self):
-
-        # NOTE for each role, permission and group
-        # Every 2nd is updated
-        # Every 3rd is disabled
 
         users = [generate_random_tuple() for _ in range(3)]
         roles = [generate_random_tuple() for _ in range(3)]
         permissions = [generate_random_tuple() for _ in range(3)]
         groups = [generate_random_tuple() for _ in range(3)]
+
+        # fund test account
+        self.fund_account()
 
         # add roles, permissions and groups
         self._verify_add_role(self._add_role(*roles[0]), *roles[0])
@@ -508,9 +508,9 @@ class TestBridgeRbac(unittest.TestCase):
         self._verify_update_group(self._update_group(*groups[1]), *groups[1])
 
         # disable roles, permissions and groups
-        # self._verify_disable_role(self._disable_role(roles[2]), roles[2]) # TODO disable_role reverts with Value not found
-        # self._verify_disable_permission(self._disable_permission(permissions[2]), permissions[2])
-        # self._verify_disable_group(self._disable_group(groups[2]), groups[2])
+        self._verify_disable_role(self._disable_role(roles[2]), roles[2])
+        self._verify_disable_permission(self._disable_permission(permissions[2]), permissions[2])
+        self._verify_disable_group(self._disable_group(groups[2]), groups[2])
 
         # assign role to user
         self._verify_assign_role_to_user(self._assign_role_to_user(roles[0][0], users[0][0]), roles[0][0], users[0][0])
