@@ -213,7 +213,7 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertEqual(events[0]['args']['role_id'], role_id)
         self.assertEqual(events[0]['args']['group_id'], group_id)
 
-    def _verify_user_assigned_or_unassigned_event(self, events, account, user_id, group_id):
+    def _verify_user_assigned_or_unassigned_to_group_event(self, events, account, user_id, group_id):
         self.assertEqual(events[0]['args']['sender'], account)
         self.assertEqual(events[0]['args']['user_id'], user_id)
         self.assertEqual(events[0]['args']['group_id'], group_id)
@@ -412,6 +412,32 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertEqual(data[0], group_id)
         self.assertEqual(data[2], False)
 
+    def _verify_assign_user_to_group(self, tx, user_id, group_id):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.UserAssignedToGroup.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_user_assigned_or_unassigned_to_group_event(events, self._eth_kp_src.ss58_address, user_id, group_id)
+
+        # verify fetch_group_users returns correct data
+        data = self._contract.functions.fetch_user_groups(self._account, user_id).call()
+        if any(group_id in groups for groups in data):
+            self.fail(f'User {user_id} not assigned to group {group_id}')
+    
+    def _verify_unassign_user_to_group(self, tx, user_id, group_id):
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        
+        # get block events and verify
+        block_idx = tx['blockNumber']
+        events = self._contract.events.UserUnassignedToGroup.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
+        self._verify_user_assigned_or_unassigned_to_group_event(events, self._eth_kp_src.ss58_address, user_id, group_id)
+
+        # verify fetch_group_users returns correct data
+        data = self._contract.functions.fetch_user_groups(self._account, user_id).call()
+        if any(group_id in groups for groups in data):
+            self.fail(f'User {user_id} still assigned to group {group_id}')
+
     def setUp(self):
         self._eth_src = calculate_evm_addr(KP_SRC.ss58_address)
         self._w3 = Web3(Web3.HTTPProvider(ETH_URL))
@@ -460,12 +486,34 @@ class TestBridgeRbac(unittest.TestCase):
         # self._verify_disable_permission(self._disable_permission(permissions[2]), permissions[2])
         # self._verify_disable_group(self._disable_group(groups[2]), groups[2])
 
-        # # assign role
-        # self._verify_assign_role_to_user(self._assign_role_to_user(role1[0], user[0]), role1[0], user[0])
+        # assign role to user
+        self._verify_assign_role_to_user(self._assign_role_to_user(roles[0], users[0]), roles[0], users[0])
+        self._assign_role_to_user(roles[1], users[0])
+        self._assign_role_to_user(roles[2], users[0])
 
-        # # unassign role
-        # self._verify_unassign_role_to_user(self._unassign_role_to_user(role2[0], user[0]),role2[0], user[0]) 
+        # unassign role to user
+        self._verify_unassign_role_to_user(self._unassign_role_to_user(roles[0], users[0]),roles[0], users[0]) 
 
-        # # update permission
+        # assign permission to role
+        self._verify_assign_permission_to_role(self._assign_permission_to_role(permissions[0], roles[0]), permissions[0], roles[0])
+        self._assign_permission_to_role(permissions[1], roles[0])
+        self._assign_permission_to_role(permissions[2], roles[0])
 
-        # # disable permission
+        # unassign permission to role
+        self._verify_unassign_permission_to_role(self._unassign_permission_to_role(permissions[0], roles[0]), permissions[0], roles[0])
+
+        # assign role to group
+        self._verify_assign_role_to_group(self._assign_role_to_group(roles[0], groups[0]), roles[0], groups[0])
+        self._assign_role_to_group(roles[1], groups[0])
+        self._assign_role_to_group(roles[2], groups[0])
+
+        # unassign role to group
+        self._verify_unassign_role_to_group(self._unassign_role_to_group(roles[0], groups[0]), roles[0], groups[0])
+
+        # assign user to group
+        self._verify_assign_user_to_group(self._assign_user_to_group(users[0], groups[0]), users[0], groups[0])
+        self._assign_user_to_group(users[1], groups[0])
+        self._assign_user_to_group(users[2], groups[0])
+
+        # unassign user to group
+        self._verify_unassign_user_to_group(self._unassign_user_to_group(users[0], groups[0]), users[0], groups[0])
