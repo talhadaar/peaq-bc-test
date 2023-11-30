@@ -163,12 +163,6 @@ class TestRewardDistribution(unittest.TestCase):
         batch = ExtrinsicBatch(self._substrate, kp)
         batch.compose_call(
             'ParachainStaking',
-            'increment_collator_rewards',
-            {}
-        )
-
-        batch.compose_call(
-            'ParachainStaking',
             'claim_rewards',
             {}
         )
