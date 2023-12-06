@@ -19,7 +19,7 @@ KP_SRC = Keypair.create_from_uri('//Alice')
 # Address of RBAC precompile contract
 RBAC_ADDRESS = '0x0000000000000000000000000000000000000802'
 # H160 Address to use for EVM transactions
-ETH_PRIVATE_KEY = '0xa2899b053679427c8c446dc990c8990c75052fd3009e563c6a613d982d6842fe'
+ETH_PRIVATE_KEY = generate_random_hex(15).encode("utf-8")
 # RBAC Precompile ABI
 ABI_FILE = 'ETH/rbac/rbac.sol.json'
 # Number of tokens with decimals
@@ -83,102 +83,119 @@ class TestBridgeRbac(unittest.TestCase):
     ##############################################################################
 
     def _add_role(self, role_id, name):
+        print(f"add_role {role_id}, {name}")
         tx = self._contract.functions.add_role(role_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _update_role(self, role_id, name):
+        print(f"update_role {role_id}, {name}")
         tx = self._contract.functions.update_role(role_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _disable_role(self, role_id):
+        print(f"disable_role {role_id}")
         tx = self._contract.functions.disable_role(role_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _assign_role_to_user(self, role_id, user_id):
+        print(f"assign_role_to_user {role_id}, {user_id}")
         tx = self._contract.functions.assign_role_to_user(role_id, user_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _unassign_role_to_user(self, role_id, user_id):
+        print(f"unassign_role_to_user {role_id}, {user_id}")
         tx = self._contract.functions.unassign_role_to_user(role_id, user_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _add_permission(self, permission_id, name):
+        print(f"add_permission {permission_id}, {name}")
         tx = self._contract.functions.add_permission(permission_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _update_permission(self, permission_id, name):
+        print(f"update_permission {permission_id}, {name}")
         tx = self._contract.functions.update_permission(permission_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _disable_permission(self, permission_id):
+        print(f"disable_permission {permission_id}")
         tx = self._contract.functions.disable_permission(permission_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _assign_permission_to_role(self, permission_id, role_id):
+        print(f"assign_permission_to_role {permission_id}, {role_id}")
         tx = self._contract.functions.assign_permission_to_role(permission_id, role_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _unassign_permission_to_role(self, permission_id, role_id):
+        print(f"unassign_permission_to_role {permission_id}, {role_id}")
         tx = self._contract.functions.unassign_permission_to_role(permission_id, role_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _add_group(self, group_id, name):
+        print(f"add_group {group_id}, {name}")
         tx = self._contract.functions.add_group(group_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _update_group(self, group_id, name):
+        print(f"update_group {group_id}, {name}")
         tx = self._contract.functions.update_group(group_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _disable_group(self, group_id):
+        print(f"disable_group {group_id}")
         tx = self._contract.functions.disable_group(group_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _assign_role_to_group(self, role_id, group_id):
+        print(f"assign_role_to_group {role_id} {group_id}")
         tx = self._contract.functions.assign_role_to_group(role_id, group_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _unassign_role_to_group(self, role_id, group_id):
+        print(f"unassign_role_to_group {role_id} {group_id}")
         tx = self._contract.functions.unassign_role_to_group(role_id, group_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _assign_user_to_group(self, user_id, group_id):
+        print(f"assign_user_to_group {user_id} {group_id}")
         tx = self._contract.functions.assign_user_to_group(user_id, group_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _unassign_user_to_group(self, user_id, group_id):
+        print(f"unassign_user_to_group {user_id} {group_id}")
         tx = self._contract.functions.unassign_user_to_group(user_id, group_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
@@ -240,9 +257,9 @@ class TestBridgeRbac(unittest.TestCase):
     ##############################################################################
     # Functions that verify mutations
     ##############################################################################
-    
+
     def _verify_add_role(self, tx, role_id, name):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -255,9 +272,9 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertEqual(data[1], name)
 
         return tx
-    
+
     def _verify_update_role(self, tx, role_id, name):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -270,11 +287,11 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertEqual(data[1], name)
 
         return tx
-    
+
     # fetch_role will return an exception if the role is disabled
     # exception is caught and verified
     def _verify_disable_role(self, tx, role_id):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -290,7 +307,7 @@ class TestBridgeRbac(unittest.TestCase):
         return tx
 
     def _verify_assign_role_to_user(self, tx, role_id, user_id):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -305,7 +322,7 @@ class TestBridgeRbac(unittest.TestCase):
         return tx
 
     def _verify_unassign_role_to_user(self, tx, role_id, user_id):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -317,9 +334,9 @@ class TestBridgeRbac(unittest.TestCase):
         if any(role_id in roles for roles in data):
             self.fail(f'Role {role_id} still assigned to user {user_id}')
 
-        
+
     def _verify_add_permission(self, tx, permission_id, name):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -332,9 +349,9 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertEqual(data[1], name)
 
         return tx
-    
+
     def _verify_update_permission(self, tx, permission_id, name):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -345,11 +362,11 @@ class TestBridgeRbac(unittest.TestCase):
         data = self._contract.functions.fetch_permission(self._account, permission_id).call()
         self.assertEqual(data[0], permission_id)
         self.assertEqual(data[1], name)
-        
+
         return tx
-    
+
     def _verify_disable_permission(self, tx, permission_id):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -365,7 +382,7 @@ class TestBridgeRbac(unittest.TestCase):
         return tx
 
     def _verify_assign_permission_to_role(self, tx, permission_id, role_id):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -376,11 +393,11 @@ class TestBridgeRbac(unittest.TestCase):
         data = self._contract.functions.fetch_role_permissions(self._account, role_id).call()
         if not any(permission_id in permissions for permissions in data):
             self.fail(f'Permission {permission_id} not assigned to role {role_id}')
-        
+
         return tx
-    
+
     def _verify_unassign_permission_to_role(self, tx, permission_id, role_id):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -393,9 +410,9 @@ class TestBridgeRbac(unittest.TestCase):
             self.fail(f'Permission {permission_id} still assigned to role {role_id}')
 
         return tx
-    
+
     def _verify_add_group(self, tx, group_id, name):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -408,9 +425,9 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertEqual(data[1], name)
 
         return tx
-    
+
     def _verify_update_group(self, tx, group_id, name):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -423,13 +440,13 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertEqual(data[1], name)
 
     def _verify_disable_group(self, tx, group_id):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
         events = self._contract.events.GroupDisabled.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
         # self._verify_group_disabled_event(events, self._eth_kp_src.ss58_address, group_id) # TODO IndexError: list index out of range for events[0]['args']['sender']
-        
+
         # fetch role and verify
         with self.assertRaises(ValueError) as tx_info:
             self._contract.functions.fetch_group(self._account, group_id).call()
@@ -437,8 +454,8 @@ class TestBridgeRbac(unittest.TestCase):
         self.assertIn(RbacErrorType.EntityDisabled.value, tx_info.exception.args[0]['message'])
 
     def _verify_assign_role_to_group(self, tx, role_id, group_id):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
-        
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
+
         # get block events and verify
         block_idx = tx['blockNumber']
         events = self._contract.events.RoleAssignedToGroup.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
@@ -450,8 +467,8 @@ class TestBridgeRbac(unittest.TestCase):
             self.fail(f'Role {role_id} not assigned to group {group_id}')
 
     def _verify_unassign_role_to_group(self, tx, role_id, group_id):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
-        
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
+
         # get block events and verify
         block_idx = tx['blockNumber']
         events = self._contract.events.RoleUnassignedToGroup.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
@@ -463,7 +480,7 @@ class TestBridgeRbac(unittest.TestCase):
             self.fail(f'Role {role_id} still assigned to group {group_id}')
 
     def _verify_assign_user_to_group(self, tx, user_id, group_id):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
         # get block events and verify
         block_idx = tx['blockNumber']
@@ -474,10 +491,10 @@ class TestBridgeRbac(unittest.TestCase):
         data = self._contract.functions.fetch_user_groups(self._account, user_id).call()
         if not any(group_id in groups for groups in data):
             self.fail(f'User {user_id} not assigned to group {group_id}')
-    
+
     def _verify_unassign_user_to_group(self, tx, user_id, group_id):
-        self.assertEqual(tx['status'], TX_SUCCESS_STATUS)
-        
+        self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
+
         # get block events and verify
         block_idx = tx['blockNumber']
         events = self._contract.events.UserUnAssignedToGroup.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
@@ -542,7 +559,7 @@ class TestBridgeRbac(unittest.TestCase):
         self._assign_role_to_user(roles[2][0], users[0][0])
 
         # unassign role to user
-        self._verify_unassign_role_to_user(self._unassign_role_to_user(roles[0][0], users[0][0]),roles[0][0], users[0][0]) 
+        self._verify_unassign_role_to_user(self._unassign_role_to_user(roles[0][0], users[0][0]),roles[0][0], users[0][0])
 
         # assign permission to role
         self._verify_assign_permission_to_role(self._assign_permission_to_role(permissions[0][0], roles[0][0]), permissions[0][0], roles[0][0])
