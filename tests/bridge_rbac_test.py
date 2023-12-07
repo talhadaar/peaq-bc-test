@@ -520,6 +520,14 @@ class TestBridgeRbac(unittest.TestCase):
         self._account = calculate_evm_account_hex(self._eth_kp_src.ss58_address)
         self._contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
 
+    #*************************************************************************
+    # Test RBAC Bridge
+    # There is no testing scenarion and each test call is atomic.
+    # Every _verify_add_*, _verify_update_*, _verify_assign_* has a corresponding _verify_disable_*, _verify_unassign_* call.
+    # Each call is verified by checking the tx status, events, and data fetched by a fetch_* rpc call.
+    # All state modifying extrinsics and fetch RPC calls are covered by these tests.
+    # Accounting for the considerable amount of extrinsics and RPC calls, please invoke a PR if coverage can be improved.
+    #*************************************************************************
     def test_rbac_bridge(self):
 
         users = [generate_random_tuple() for _ in range(3)]
