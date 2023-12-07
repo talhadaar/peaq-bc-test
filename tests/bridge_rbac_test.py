@@ -445,7 +445,9 @@ class TestBridgeRbac(unittest.TestCase):
         # get block events and verify
         block_idx = tx['blockNumber']
         events = self._contract.events.GroupDisabled.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
-        # self._verify_group_disabled_event(events, self._eth_kp_src.ss58_address, group_id) # TODO IndexError: list index out of range for events[0]['args']['sender']
+        print(events)
+        print(events[0])
+        self._verify_group_disabled_event(events, self._eth_kp_src.ss58_address, group_id)
 
         # fetch role and verify
         with self.assertRaises(ValueError) as tx_info:
