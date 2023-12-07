@@ -551,7 +551,7 @@ class TestBridgeRbac(unittest.TestCase):
         self._add_group(*groups[1])
         self._add_group(*groups[2])
 
-        # update roles, permissions and groups - TODO replace updated values with newer values and check
+        # update roles, permissions and groups
         self._verify_update_role(self._update_role(*roles[1]), *roles[1])
         self._verify_update_permission(self._update_permission(*permissions[1]), *permissions[1])
         self._verify_update_group(self._update_group(*groups[1]), *groups[1])
@@ -575,7 +575,7 @@ class TestBridgeRbac(unittest.TestCase):
         self._assign_permission_to_role(permissions[2][0], roles[0][0])
 
         # unassign permission to role
-        self._verify_unassign_permission_to_role(self._unassign_permission_to_role(permissions[0][0], roles[0][0]), permissions[0][0], roles[0][0]) # TODO tx status is 0
+        self._verify_unassign_permission_to_role(self._unassign_permission_to_role(permissions[0][0], roles[0][0]), permissions[0][0], roles[0][0])
 
         # assign role to group
         self._verify_assign_role_to_group(self._assign_role_to_group(roles[0][0], groups[0][0]), roles[0][0], groups[0][0])
@@ -583,7 +583,7 @@ class TestBridgeRbac(unittest.TestCase):
         self._assign_role_to_group(roles[2][0], groups[0][0])
 
         # unassign role to group
-        self._verify_unassign_role_to_group(self._unassign_role_to_group(roles[0][0], groups[0][0]), roles[0][0], groups[0][0]) # TODO tx status is 0
+        self._verify_unassign_role_to_group(self._unassign_role_to_group(roles[0][0], groups[0][0]), roles[0][0], groups[0][0])
 
         # assign user to group
         self._verify_assign_user_to_group(self._assign_user_to_group(users[0][0], groups[0][0]), users[0][0], groups[0][0])
