@@ -114,7 +114,7 @@ class TestDelegator(unittest.TestCase):
         return False
 
     def batch_fund(self, batch, kp, amount):
-        batch.compose_sudo_call('Balances', 'set_balance', {
+        batch.compose_sudo_call('Balances', 'force_set_balance', {
             'who': kp.ss58_address,
             'new_free': amount,
             'new_reserved': 0
@@ -165,7 +165,7 @@ class TestDelegator(unittest.TestCase):
             return
 
         # Check it's the peaq-dev parachain
-        self.assertTrue(self.chain_name in ['peaq-dev', 'peaq-dev-fork', 'krest', 'krest-network-fork'])
+        self.assertTrue(self.chain_name in ['peaq-dev', 'peaq-dev-fork', 'krest-network', 'krest-network-fork'])
 
         batch = ExtrinsicBatch(self.substrate, KP_GLOBAL_SUDO)
         batch.compose_sudo_call('BlockReward', 'set_max_currency_supply', {

@@ -1,7 +1,9 @@
 import unittest
 
 from substrateinterface import SubstrateInterface
-from tools.utils import WS_URL, get_chain, get_block_hash, get_block_height
+from tools.utils import WS_URL, get_chain, get_block_hash, get_block_height, PARACHAIN_WS_URL
+from tests.utils_func import restart_parachain_and_runtime_upgrade
+from tools.runtime_upgrade import wait_until_block_height
 
 
 import pprint
@@ -24,7 +26,7 @@ STATE_INFOS = [{
     'type': {
         'peaq-dev': {'length': 10},
         'agung-network': {'length': 600},
-        'krest-network': {'length': 600},
+        'krest-network': {'length': 1200},
         'peaq-network': {'length': 600},
     }
 }, {
@@ -179,6 +181,8 @@ class TokenEconomyTest(unittest.TestCase):
             return test_type[self._chain_spec]
 
     def setUp(self):
+        restart_parachain_and_runtime_upgrade()
+        wait_until_block_height(SubstrateInterface(url=PARACHAIN_WS_URL), 1)
         self._substrate = SubstrateInterface(url=WS_URL)
         current_height = get_block_height(self._substrate)
         self._block_hash = get_block_hash(self._substrate, current_height)
@@ -198,7 +202,7 @@ class TokenEconomyTest(unittest.TestCase):
             golden_data = self.get_info(test['type'])
             if isinstance(golden_data, dict):
                 for k, v in golden_data.items():
-                    self.assertEqual(result.value[k], v, f'{result.value} != {k}: {v}')
+                    self.assertEqual(result.value[k], v, f'{result.value} != {k}: {v}, {storage_function}')
             else:
                 if 'almost' in test and test['almost']:
                     self.assertAlmostEqual(result.value / golden_data, 1, 7, msg=f'{result.value} != {test}')
