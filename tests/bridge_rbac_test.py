@@ -83,119 +83,102 @@ class TestBridgeRbac(unittest.TestCase):
     ##############################################################################
 
     def _add_role(self, role_id, name):
-        print(f"add_role {role_id}, {name}")
         tx = self._contract.functions.add_role(role_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _update_role(self, role_id, name):
-        print(f"update_role {role_id}, {name}")
         tx = self._contract.functions.update_role(role_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _disable_role(self, role_id):
-        print(f"disable_role {role_id}")
         tx = self._contract.functions.disable_role(role_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _assign_role_to_user(self, role_id, user_id):
-        print(f"assign_role_to_user {role_id}, {user_id}")
         tx = self._contract.functions.assign_role_to_user(role_id, user_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _unassign_role_to_user(self, role_id, user_id):
-        print(f"unassign_role_to_user {role_id}, {user_id}")
         tx = self._contract.functions.unassign_role_to_user(role_id, user_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _add_permission(self, permission_id, name):
-        print(f"add_permission {permission_id}, {name}")
         tx = self._contract.functions.add_permission(permission_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _update_permission(self, permission_id, name):
-        print(f"update_permission {permission_id}, {name}")
         tx = self._contract.functions.update_permission(permission_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _disable_permission(self, permission_id):
-        print(f"disable_permission {permission_id}")
         tx = self._contract.functions.disable_permission(permission_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _assign_permission_to_role(self, permission_id, role_id):
-        print(f"assign_permission_to_role {permission_id}, {role_id}")
         tx = self._contract.functions.assign_permission_to_role(permission_id, role_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _unassign_permission_to_role(self, permission_id, role_id):
-        print(f"unassign_permission_to_role {permission_id}, {role_id}")
         tx = self._contract.functions.unassign_permission_to_role(permission_id, role_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _add_group(self, group_id, name):
-        print(f"add_group {group_id}, {name}")
         tx = self._contract.functions.add_group(group_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _update_group(self, group_id, name):
-        print(f"update_group {group_id}, {name}")
         tx = self._contract.functions.update_group(group_id, name).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _disable_group(self, group_id):
-        print(f"disable_group {group_id}")
         tx = self._contract.functions.disable_group(group_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _assign_role_to_group(self, role_id, group_id):
-        print(f"assign_role_to_group {role_id} {group_id}")
         tx = self._contract.functions.assign_role_to_group(role_id, group_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _unassign_role_to_group(self, role_id, group_id):
-        print(f"unassign_role_to_group {role_id} {group_id}")
         tx = self._contract.functions.unassign_role_to_group(role_id, group_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _assign_user_to_group(self, user_id, group_id):
-        print(f"assign_user_to_group {user_id} {group_id}")
         tx = self._contract.functions.assign_user_to_group(user_id, group_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
         return _sign_and_submit_transaction(tx, self._w3, self._eth_kp_src)
 
     def _unassign_user_to_group(self, user_id, group_id):
-        print(f"unassign_user_to_group {user_id} {group_id}")
         tx = self._contract.functions.unassign_user_to_group(user_id, group_id).build_transaction(
             _calcualte_evm_basic_req(self._substrate, self._w3, self._eth_kp_src.ss58_address)
         )
@@ -445,8 +428,6 @@ class TestBridgeRbac(unittest.TestCase):
         # get block events and verify
         block_idx = tx['blockNumber']
         events = self._contract.events.GroupDisabled.create_filter(fromBlock=block_idx, toBlock=block_idx).get_all_entries()
-        print(events)
-        print(events[0])
         self._verify_group_disabled_event(events, self._eth_kp_src.ss58_address, group_id)
 
         # fetch role and verify
