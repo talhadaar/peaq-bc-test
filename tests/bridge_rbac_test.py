@@ -36,6 +36,7 @@ def generate_random_tuple():
     name = f'NAME{id[:4]}'.encode("utf-8")
     return (id, name)
 
+
 ##############################################################################
 # RbacErrorType as Enum for convenience
 ##############################################################################
@@ -59,6 +60,7 @@ class RbacErrorType(enum.Enum):
 # Helper functions for submitting transactions
 ##############################################################################
 
+
 def _calcualte_evm_basic_req(substrate, w3, addr):
     return {
         'from': addr,
@@ -74,6 +76,7 @@ def _sign_and_submit_transaction(tx, w3, signer):
     signed_txn = w3.eth.account.sign_transaction(tx, private_key=signer.private_key)
     tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
     return w3.eth.wait_for_transaction_receipt(tx_hash)
+
 
 # NOTE: fetch_user_roles will return an error if the user has no roles
 class TestBridgeRbac(unittest.TestCase):
@@ -317,7 +320,6 @@ class TestBridgeRbac(unittest.TestCase):
         if any(role_id in roles for roles in data):
             self.fail(f'Role {role_id} still assigned to user {user_id}')
 
-
     def _verify_add_permission(self, tx, permission_id, name):
         self.assertEqual(tx['status'], TX_SUCCESS_STATUS, tx)
 
@@ -503,14 +505,14 @@ class TestBridgeRbac(unittest.TestCase):
         self._account = calculate_evm_account_hex(self._eth_kp_src.ss58_address)
         self._contract = get_contract(self._w3, RBAC_ADDRESS, ABI_FILE)
 
-    #*************************************************************************
+    # *************************************************************************
     # Test RBAC Bridge
     # There is no testing scenarion and each test call is atomic.
     # Every _verify_add_*, _verify_update_*, _verify_assign_* has a corresponding _verify_disable_*, _verify_unassign_* call.
     # Each call is verified by checking the tx status, events, and data fetched by a fetch_* rpc call.
     # All state modifying extrinsics and fetch RPC calls are covered by these tests.
     # Accounting for the considerable amount of extrinsics and RPC calls, please invoke a PR if coverage can be improved.
-    #*************************************************************************
+    # *************************************************************************
     def test_rbac_bridge(self):
 
         users = [generate_random_tuple() for _ in range(3)]
@@ -550,7 +552,7 @@ class TestBridgeRbac(unittest.TestCase):
         self._assign_role_to_user(roles[2][0], users[0][0])
 
         # unassign role to user
-        self._verify_unassign_role_to_user(self._unassign_role_to_user(roles[0][0], users[0][0]),roles[0][0], users[0][0])
+        self._verify_unassign_role_to_user(self._unassign_role_to_user(roles[0][0], users[0][0]), roles[0][0], users[0][0])
 
         # assign permission to role
         self._verify_assign_permission_to_role(self._assign_permission_to_role(permissions[0][0], roles[0][0]), permissions[0][0], roles[0][0])
