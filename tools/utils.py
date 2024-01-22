@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 sys.path.append('.')
@@ -30,8 +31,15 @@ BIFROST_ETH_URL = 'http://127.0.0.1:10144'
 # PARACHAIN_ETH_URL = 'https://rpcpc1.agung.peaq.network'
 # WS_URL = 'ws://127.0.0.1:9944'
 # ETH_URL = 'http://127.0.0.1:9933'
-WS_URL = PARACHAIN_WS_URL
-ETH_URL = PARACHAIN_ETH_URL
+AUTOTEST_URI = os.environ.get('AUTOTEST_URI')
+
+if AUTOTEST_URI:
+    WS_URL = 'ws://' + AUTOTEST_URI
+    ETH_URL = 'http://' + AUTOTEST_URI
+else:
+    WS_URL = PARACHAIN_WS_URL
+    ETH_URL = PARACHAIN_ETH_URL
+
 # WS_URL = 'ws://192.168.178.23:9944'
 # ETH_URL = 'http://192.168.178.23:9933'
 # WS_URL = 'wss://wss.test.peaq.network'
